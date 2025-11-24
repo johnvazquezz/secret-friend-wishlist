@@ -31,12 +31,12 @@ export default function MemberCard({ member, onEdit }: MemberCardProps) {
           </p>
         </div>
 
-        <button
+        {/* <button
           onClick={() => onEdit(member)}
           className="w-full bg-primary hover:bg-primary-dark text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg mt-4"
         >
           Editar mi tarjeta
-        </button>
+        </button> */}
       </div>
     </div>
   );
