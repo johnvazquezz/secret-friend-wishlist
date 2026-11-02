@@ -3,8 +3,9 @@ import ChangePasswordPage from '../features/auth/ChangePasswordPage';
 import { RequireAdmin, RequireAuth } from '../features/auth/guards';
 import LoginPage from '../features/auth/LoginPage';
 import HomePage from '../features/event/HomePage';
-import MembersPage from '../features/members/MembersPage';
 import ProfilePage from '../features/profile/ProfilePage';
+import MyListPage from '../features/wishlist/MyListPage';
+import WishesPage from '../features/wishlist/WishesPage';
 import AppLayout from './AppLayout';
 import AuthLayout from './AuthLayout';
 import NotFoundPage from './NotFoundPage';
@@ -29,7 +30,8 @@ export const routes: RouteObject[] = [
             element: <AppLayout />,
             children: [
               { index: true, element: <HomePage /> },
-              { path: 'deseos', element: <MembersPage /> },
+              { path: 'mi-lista', element: <MyListPage /> },
+              { path: 'deseos', element: <WishesPage /> },
               { path: 'perfil', element: <ProfilePage /> },
               {
                 element: <RequireAdmin />,

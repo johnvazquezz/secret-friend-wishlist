@@ -72,7 +72,7 @@ export default function HomePage() {
       {event.exchange_at && <CountdownDisplay target={event.exchange_at} />}
 
       {assignment ? (
-        <SecretFriendCard assignment={assignment} />
+        <SecretFriendCard assignment={assignment} eventId={event.id} currency={event.currency} />
       ) : (
         <ParticipationPanel event={event} status={participation} />
       )}

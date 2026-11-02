@@ -28,6 +28,9 @@ export default function AppLayout() {
             <NavLink to="/" end className={navLinkClass}>
               Inicio
             </NavLink>
+            <NavLink to="/mi-lista" className={navLinkClass}>
+              Mi lista
+            </NavLink>
             <NavLink to="/deseos" className={navLinkClass}>
               Deseos
             </NavLink>

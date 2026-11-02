@@ -2,10 +2,17 @@ import { Eye, EyeOff, Gift } from 'lucide-react';
 import { useState } from 'react';
 import Avatar from '../../components/ui/Avatar';
 import { useAvatarUrls } from '../profile/hooks';
+import RecipientDetails from '../wishlist/RecipientDetails';
 import type { MyAssignment } from './api';
 
+interface SecretFriendCardProps {
+  assignment: MyAssignment;
+  eventId: string;
+  currency?: string;
+}
+
 /** Muestra a quién le regala el usuario. Oculto por defecto para evitar miradas indiscretas. */
-export default function SecretFriendCard({ assignment }: { assignment: MyAssignment }) {
+export default function SecretFriendCard({ assignment, eventId, currency }: SecretFriendCardProps) {
   const [visible, setVisible] = useState(false);
   const { data: urls } = useAvatarUrls(visible ? [assignment.avatar_path] : []);
 
@@ -26,6 +33,12 @@ export default function SecretFriendCard({ assignment }: { assignment: MyAssignm
             />
             <p className="text-3xl font-bold text-gray-800">{assignment.full_name}</p>
             {assignment.department && <p className="text-gray-500">{assignment.department}</p>}
+            <RecipientDetails
+              eventId={eventId}
+              receiverId={assignment.receiver_id}
+              firstName={assignment.full_name.split(' ')[0]}
+              currency={currency}
+            />
           </div>
         ) : (
           <p className="text-gray-600 py-6">

@@ -11,6 +11,30 @@ import {
   type EventRow,
 } from './api';
 
+vi.mock('../wishlist/api', () => ({
+  fetchWishlist: vi.fn().mockResolvedValue([
+    {
+      id: 'w1',
+      user_id: 'user-2',
+      title: 'Taza de café',
+      url: 'https://tienda.com/taza',
+      notes: null,
+      price_hint: 10,
+      priority: 1,
+      position: 0,
+      created_at: '2026-11-01T00:00:00Z',
+      updated_at: '2026-11-01T00:00:00Z',
+    },
+  ]),
+  fetchRecipientPreferences: vi.fn().mockResolvedValue({
+    likes: 'Café',
+    dislikes: null,
+    sizes: 'M',
+    allergies: null,
+    notes: null,
+  }),
+}));
+
 vi.mock('./api', () => ({
   fetchActiveEvent: vi.fn(),
   fetchMyParticipation: vi.fn(),
@@ -114,6 +138,12 @@ describe('HomePage', () => {
     await userEvent.click(button);
     expect(screen.getByText('Luis Gómez')).toBeInTheDocument();
     expect(mocks.assignment).toHaveBeenCalledWith('event-1');
+    expect(await screen.findByText('Taza de café')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'tienda.com' })).toHaveAttribute(
+      'rel',
+      'noopener noreferrer nofollow',
+    );
+    expect(screen.getByText('Café')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Ocultar' }));
     expect(screen.queryByText('Luis Gómez')).not.toBeInTheDocument();

@@ -89,6 +89,9 @@ Usuarios de prueba del seed (contraseña `Amigo2026local`):
   `assignments` no tiene ningún permiso de lectura para los usuarios de la app; cada persona obtiene
   solo su destinatario mediante la función `get_my_assignment`. El admin solo ve conteos.
 - No existe ninguna función para revelar al amigo secreto.
+- **Lista de deseos** (*Mi lista*): la ve todo el equipo en *Deseos*, así nadie sabe quién te
+  regala. **Gustos personales** (tallas, alergias, lo que no te gusta): solo los ve la persona que
+  te regala, y solo después de publicar el sorteo.
 - Quien tenga acceso al **dashboard de Supabase** (dueño del proyecto) sí podría consultar la base
   de datos directamente. Limita ese acceso a la persona técnica responsable y, si es posible, que no
   sea participante.

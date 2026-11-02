@@ -318,6 +318,93 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_preferences: {
+        Row: {
+          allergies: string | null;
+          dislikes: string | null;
+          likes: string | null;
+          notes: string | null;
+          sizes: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          allergies?: string | null;
+          dislikes?: string | null;
+          likes?: string | null;
+          notes?: string | null;
+          sizes?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          allergies?: string | null;
+          dislikes?: string | null;
+          likes?: string | null;
+          notes?: string | null;
+          sizes?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_preferences_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: true;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      wishlist_items: {
+        Row: {
+          created_at: string;
+          id: string;
+          notes: string | null;
+          position: number;
+          price_hint: number | null;
+          priority: number;
+          title: string;
+          updated_at: string;
+          url: string | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          notes?: string | null;
+          position?: number;
+          price_hint?: number | null;
+          priority?: number;
+          title: string;
+          updated_at?: string;
+          url?: string | null;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          notes?: string | null;
+          position?: number;
+          price_hint?: number | null;
+          priority?: number;
+          title?: string;
+          updated_at?: string;
+          url?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'wishlist_items_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -349,6 +436,16 @@ export type Database = {
           department: string;
           full_name: string;
           receiver_id: string;
+        }[];
+      };
+      get_my_recipient_preferences: {
+        Args: { p_event_id: string };
+        Returns: {
+          allergies: string;
+          dislikes: string;
+          likes: string;
+          notes: string;
+          sizes: string;
         }[];
       };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
