@@ -1,8 +1,8 @@
 import type { RouteObject } from 'react-router-dom';
-import AdminUsersPage from '../features/admin/users/AdminUsersPage';
 import ChangePasswordPage from '../features/auth/ChangePasswordPage';
 import { RequireAdmin, RequireAuth } from '../features/auth/guards';
 import LoginPage from '../features/auth/LoginPage';
+import HomePage from '../features/event/HomePage';
 import MembersPage from '../features/members/MembersPage';
 import ProfilePage from '../features/profile/ProfilePage';
 import AppLayout from './AppLayout';
@@ -28,11 +28,26 @@ export const routes: RouteObject[] = [
           {
             element: <AppLayout />,
             children: [
-              { index: true, element: <MembersPage /> },
+              { index: true, element: <HomePage /> },
+              { path: 'deseos', element: <MembersPage /> },
               { path: 'perfil', element: <ProfilePage /> },
               {
                 element: <RequireAdmin />,
-                children: [{ path: 'admin/usuarios', element: <AdminUsersPage /> }],
+                children: [
+                  // Las páginas de admin se cargan bajo demanda: la mayoría de usuarios no las usa.
+                  {
+                    path: 'admin/evento',
+                    lazy: async () => ({
+                      Component: (await import('../features/admin/event/AdminEventPage')).default,
+                    }),
+                  },
+                  {
+                    path: 'admin/usuarios',
+                    lazy: async () => ({
+                      Component: (await import('../features/admin/users/AdminUsersPage')).default,
+                    }),
+                  },
+                ],
               },
               { path: '*', element: <NotFoundPage /> },
             ],

@@ -69,6 +69,30 @@ Usuarios de prueba del seed (contraseña `Amigo2026local`):
 - La seguridad real está en la base de datos (RLS + privilegios por columna) y en la Edge Function
   `admin-users`, la única que usa la service role key.
 
+## 🎁 Evento y sorteo
+
+1. El admin crea el evento en *Evento* (fechas, presupuesto, lugar, reglas). Queda en **borrador**.
+2. Agrega participantes (todos los usuarios activos o uno a uno) y, si hace falta, **exclusiones**
+   (parejas que no pueden tocarse entre sí).
+3. **Abre la inscripción**: cada participante confirma si participa desde *Inicio*. El admin también
+   puede marcar la respuesta de quien no entre a la app.
+4. **Hace el sorteo**: solo entran los confirmados con cuenta activa. Es un único ciclo aleatorio
+   (nadie se regala a sí mismo, todos dan y reciben exactamente un regalo, sin parejas A↔B).
+   Mientras no se publique se puede repetir.
+5. **Publica**: cada persona ve en *Inicio* a quién le regala (oculto hasta pulsar *Mostrar*).
+   Es definitivo.
+6. Tras el intercambio, **finaliza** el evento para archivarlo y poder crear el del año siguiente.
+
+### 🔒 Privacidad del sorteo
+
+- **Nadie puede ver quién le regala a quién, tampoco los administradores.** La tabla
+  `assignments` no tiene ningún permiso de lectura para los usuarios de la app; cada persona obtiene
+  solo su destinatario mediante la función `get_my_assignment`. El admin solo ve conteos.
+- No existe ninguna función para revelar al amigo secreto.
+- Quien tenga acceso al **dashboard de Supabase** (dueño del proyecto) sí podría consultar la base
+  de datos directamente. Limita ese acceso a la persona técnica responsable y, si es posible, que no
+  sea participante.
+
 ## ☁️ Puesta en producción (Supabase)
 
 1. Enlaza el proyecto: `npx supabase link --project-ref <ref>`.

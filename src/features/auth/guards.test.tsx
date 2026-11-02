@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { routes } from '../../app/routes';
 import { makeAuth, makeProfile, renderRoutes } from '../../test/utils';
 
-vi.mock('../members/api', () => ({ fetchMembers: vi.fn().mockResolvedValue([]) }));
+vi.mock('../event/api', () => ({ fetchActiveEvent: vi.fn().mockResolvedValue(null) }));
 
 describe('guards de rutas', () => {
   it('sin sesión redirige al login', async () => {
@@ -22,7 +22,7 @@ describe('guards de rutas', () => {
 
   it('un participante no entra al panel de admin ni ve el enlace', async () => {
     const { router } = renderRoutes(routes, '/admin/usuarios');
-    expect(await screen.findByText('No hay miembros aún.')).toBeInTheDocument();
+    expect(await screen.findByText(/no hay un Amigo Secreto en marcha/)).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
     expect(screen.queryByRole('link', { name: 'Usuarios' })).not.toBeInTheDocument();
   });
@@ -41,7 +41,7 @@ describe('guards de rutas', () => {
 
   it('con sesión, /login redirige al inicio', async () => {
     const { router } = renderRoutes(routes, '/login');
-    expect(await screen.findByText('No hay miembros aún.')).toBeInTheDocument();
+    expect(await screen.findByText(/no hay un Amigo Secreto en marcha/)).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
   });
 });

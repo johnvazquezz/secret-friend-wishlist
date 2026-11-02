@@ -5,6 +5,7 @@
 --   admin@local.test  → admin
 --   ana@local.test    → participante
 --   luis@local.test   → participante (con contraseña temporal: se le obliga a cambiarla)
+--   maria@, pedro@, sofia@, jorge@local.test → participantes
 
 insert into team_members (name, access_code, wishes) values
   ('Ana Pérez',   'local-demo-1', 'Un libro de cocina'),
@@ -20,7 +21,11 @@ begin
     from (values
       ('00000000-0000-4000-8000-000000000001'::uuid, 'admin@local.test', 'Admin Local', 'Talento Humano'),
       ('00000000-0000-4000-8000-000000000002'::uuid, 'ana@local.test',   'Ana Pérez',   'Finanzas'),
-      ('00000000-0000-4000-8000-000000000003'::uuid, 'luis@local.test',  'Luis Gómez',  'Operaciones')
+      ('00000000-0000-4000-8000-000000000003'::uuid, 'luis@local.test',  'Luis Gómez',  'Operaciones'),
+      ('00000000-0000-4000-8000-000000000004'::uuid, 'maria@local.test', 'María López', 'Ventas'),
+      ('00000000-0000-4000-8000-000000000005'::uuid, 'pedro@local.test', 'Pedro Ruiz',  'Ventas'),
+      ('00000000-0000-4000-8000-000000000006'::uuid, 'sofia@local.test', 'Sofía Díaz',  'Finanzas'),
+      ('00000000-0000-4000-8000-000000000007'::uuid, 'jorge@local.test', 'Jorge Castro','Operaciones')
     ) as t (id, email, full_name, department)
   loop
     insert into auth.users (
@@ -52,4 +57,4 @@ where email = 'admin@local.test';
 
 update public.profiles
 set must_change_password = false
-where email = 'ana@local.test';
+where email in ('ana@local.test', 'maria@local.test', 'pedro@local.test', 'sofia@local.test', 'jorge@local.test');

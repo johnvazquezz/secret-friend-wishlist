@@ -28,13 +28,21 @@ export default function AppLayout() {
             <NavLink to="/" end className={navLinkClass}>
               Inicio
             </NavLink>
+            <NavLink to="/deseos" className={navLinkClass}>
+              Deseos
+            </NavLink>
             <NavLink to="/perfil" className={navLinkClass}>
               Mi perfil
             </NavLink>
             {isAdmin && (
-              <NavLink to="/admin/usuarios" className={navLinkClass}>
-                Usuarios
-              </NavLink>
+              <>
+                <NavLink to="/admin/evento" className={navLinkClass}>
+                  Evento
+                </NavLink>
+                <NavLink to="/admin/usuarios" className={navLinkClass}>
+                  Usuarios
+                </NavLink>
+              </>
             )}
           </nav>
           {profile && (

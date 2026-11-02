@@ -20,7 +20,7 @@ describe('MembersPage', () => {
 
   it('muestra las tarjetas de los miembros', async () => {
     fetchMembersMock.mockResolvedValue(members);
-    renderRoutes(routes);
+    renderRoutes(routes, '/deseos');
 
     expect(await screen.findByRole('heading', { name: 'Ana' })).toBeInTheDocument();
     expect(screen.getByText('Un libro')).toBeInTheDocument();
@@ -30,14 +30,14 @@ describe('MembersPage', () => {
 
   it('muestra el estado vacío', async () => {
     fetchMembersMock.mockResolvedValue([]);
-    renderRoutes(routes);
+    renderRoutes(routes, '/deseos');
 
     expect(await screen.findByText('No hay miembros aún.')).toBeInTheDocument();
   });
 
   it('distingue un error de carga del estado vacío y permite reintentar', async () => {
     fetchMembersMock.mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce(members);
-    renderRoutes(routes);
+    renderRoutes(routes, '/deseos');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudieron cargar');
     expect(screen.queryByText('No hay miembros aún.')).not.toBeInTheDocument();

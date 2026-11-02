@@ -23,6 +23,50 @@ export type Database = {
   };
   public: {
     Tables: {
+      assignments: {
+        Row: {
+          created_at: string;
+          event_id: string;
+          giver_id: string;
+          receiver_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          event_id: string;
+          giver_id: string;
+          receiver_id: string;
+        };
+        Update: {
+          created_at?: string;
+          event_id?: string;
+          giver_id?: string;
+          receiver_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'assignments_event_id_fkey';
+            columns: ['event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'assignments_giver_id_fkey';
+            columns: ['giver_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'assignments_receiver_id_fkey';
+            columns: ['receiver_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       audit_log: {
         Row: {
           action: string;
@@ -53,6 +97,153 @@ export type Database = {
           {
             foreignKeyName: 'audit_log_actor_id_fkey';
             columns: ['actor_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      event_participants: {
+        Row: {
+          created_at: string;
+          event_id: string;
+          responded_at: string | null;
+          status: Database['public']['Enums']['participation_status'];
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          event_id: string;
+          responded_at?: string | null;
+          status?: Database['public']['Enums']['participation_status'];
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          event_id?: string;
+          responded_at?: string | null;
+          status?: Database['public']['Enums']['participation_status'];
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'event_participants_event_id_fkey';
+            columns: ['event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'event_participants_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      events: {
+        Row: {
+          budget_amount: number | null;
+          created_at: string;
+          created_by: string | null;
+          currency: string;
+          description: string | null;
+          drawn_at: string | null;
+          exchange_at: string | null;
+          id: string;
+          location: string | null;
+          name: string;
+          published_at: string | null;
+          registration_deadline: string | null;
+          rules: string | null;
+          status: Database['public']['Enums']['event_status'];
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          budget_amount?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          currency?: string;
+          description?: string | null;
+          drawn_at?: string | null;
+          exchange_at?: string | null;
+          id?: string;
+          location?: string | null;
+          name: string;
+          published_at?: string | null;
+          registration_deadline?: string | null;
+          rules?: string | null;
+          status?: Database['public']['Enums']['event_status'];
+          updated_at?: string;
+        };
+        Update: {
+          budget_amount?: number | null;
+          created_at?: string;
+          created_by?: string | null;
+          currency?: string;
+          description?: string | null;
+          drawn_at?: string | null;
+          exchange_at?: string | null;
+          id?: string;
+          location?: string | null;
+          name?: string;
+          published_at?: string | null;
+          registration_deadline?: string | null;
+          rules?: string | null;
+          status?: Database['public']['Enums']['event_status'];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'events_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      exclusions: {
+        Row: {
+          created_at: string;
+          event_id: string;
+          user_a: string;
+          user_b: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          event_id: string;
+          user_a: string;
+          user_b: string;
+        };
+        Update: {
+          created_at?: string;
+          event_id?: string;
+          user_a?: string;
+          user_b?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'exclusions_event_id_fkey';
+            columns: ['event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'exclusions_user_a_fkey';
+            columns: ['user_a'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'exclusions_user_b_fkey';
+            columns: ['user_b'];
             isOneToOne: false;
             referencedRelation: 'profiles';
             referencedColumns: ['id'];
@@ -132,11 +323,57 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      admin_set_participation: {
+        Args: {
+          p_event_id: string;
+          p_status: Database['public']['Enums']['participation_status'];
+          p_user_id: string;
+        };
+        Returns: undefined;
+      };
       complete_password_change: { Args: Record<PropertyKey, never>; Returns: undefined };
+      draw_summary: {
+        Args: { p_event_id: string };
+        Returns: {
+          assigned: number;
+          confirmed: number;
+          is_valid: boolean;
+        }[];
+      };
+      event_is_editable: { Args: { p_event_id: string }; Returns: boolean };
+      finish_event: { Args: { p_event_id: string }; Returns: undefined };
+      get_my_assignment: {
+        Args: { p_event_id: string };
+        Returns: {
+          avatar_path: string;
+          department: string;
+          full_name: string;
+          receiver_id: string;
+        }[];
+      };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      lock_event: {
+        Args: { p_event_id: string; p_expected: Database['public']['Enums']['event_status'][] };
+        Returns: Database['public']['Enums']['event_status'];
+      };
+      open_event: { Args: { p_event_id: string }; Returns: undefined };
+      publish_draw: { Args: { p_event_id: string }; Returns: undefined };
+      require_admin: { Args: Record<PropertyKey, never>; Returns: undefined };
+      reset_draw: { Args: { p_event_id: string }; Returns: undefined };
+      respond_participation: {
+        Args: { p_accept: boolean; p_event_id: string };
+        Returns: undefined;
+      };
+      run_draw: { Args: { p_event_id: string }; Returns: number };
+      write_audit: {
+        Args: { p_action: string; p_details?: Json; p_target: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       app_role: 'participant' | 'admin';
+      event_status: 'draft' | 'open' | 'drawn' | 'published' | 'finished';
+      participation_status: 'invited' | 'confirmed' | 'declined';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -252,6 +489,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ['participant', 'admin'],
+      event_status: ['draft', 'open', 'drawn', 'published', 'finished'],
+      participation_status: ['invited', 'confirmed', 'declined'],
     },
   },
 } as const;
