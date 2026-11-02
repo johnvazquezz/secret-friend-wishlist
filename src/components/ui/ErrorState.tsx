@@ -4,9 +4,14 @@ import Button from './Button';
 interface ErrorStateProps {
   message: string;
   onRetry?: () => void;
+  retryLabel?: string;
 }
 
-export default function ErrorState({ message, onRetry }: ErrorStateProps) {
+export default function ErrorState({
+  message,
+  onRetry,
+  retryLabel = 'Reintentar',
+}: ErrorStateProps) {
   return (
     <div
       role="alert"
@@ -17,7 +22,7 @@ export default function ErrorState({ message, onRetry }: ErrorStateProps) {
       {onRetry && (
         <Button onClick={onRetry}>
           <RotateCw aria-hidden="true" className="w-5 h-5" />
-          Reintentar
+          {retryLabel}
         </Button>
       )}
     </div>
