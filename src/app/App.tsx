@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import AuthProvider from '../features/auth/AuthProvider';
-import { providerFutureFlags, routerFutureFlags } from './routerConfig';
 import { routes } from './routes';
 
 const queryClient = new QueryClient({
@@ -10,13 +9,13 @@ const queryClient = new QueryClient({
   },
 });
 
-const router = createBrowserRouter(routes, { future: routerFutureFlags });
+const router = createBrowserRouter(routes);
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <RouterProvider router={router} future={providerFutureFlags} />
+        <RouterProvider router={router} />
       </AuthProvider>
     </QueryClientProvider>
   );

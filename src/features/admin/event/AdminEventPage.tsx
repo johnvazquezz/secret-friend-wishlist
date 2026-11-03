@@ -16,6 +16,7 @@ import EventForm from './EventForm';
 import ExclusionsSection from './ExclusionsSection';
 import LifecyclePanel from './LifecyclePanel';
 import ParticipantsSection from './ParticipantsSection';
+import StatsPanel from './StatsPanel';
 
 export default function AdminEventPage() {
   const eventQuery = useActiveEvent();
@@ -113,6 +114,8 @@ function ManageEvent({ event }: { event: EventRow }) {
       </div>
 
       <LifecyclePanel event={event} participants={participants} />
+
+      {event.status !== 'draft' && <StatsPanel event={event} />}
 
       <ParticipantsSection
         event={event}

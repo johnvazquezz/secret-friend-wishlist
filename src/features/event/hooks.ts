@@ -6,6 +6,7 @@ import {
   deleteEvent,
   fetchActiveEvent,
   fetchDrawSummary,
+  fetchEventStats,
   fetchExclusions,
   fetchMyAssignment,
   fetchMyParticipation,
@@ -32,6 +33,7 @@ export const eventKeys = {
   participants: (eventId: string) => [...eventKeys.all, eventId, 'participants'] as const,
   exclusions: (eventId: string) => [...eventKeys.all, eventId, 'exclusions'] as const,
   summary: (eventId: string) => [...eventKeys.all, eventId, 'summary'] as const,
+  stats: (eventId: string) => [...eventKeys.all, eventId, 'stats'] as const,
 };
 
 function useInvalidateEvent() {
@@ -100,6 +102,14 @@ export function useLifecycleAction(eventId: string) {
   return useMutation({
     mutationFn: (action: LifecycleAction) => runLifecycleAction(action, eventId),
     onSuccess,
+  });
+}
+
+export function useEventStats(eventId: string) {
+  return useQuery({
+    queryKey: eventKeys.stats(eventId),
+    queryFn: () => fetchEventStats(eventId),
+    refetchInterval: 60_000,
   });
 }
 

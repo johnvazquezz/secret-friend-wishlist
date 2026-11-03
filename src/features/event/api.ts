@@ -117,6 +117,14 @@ export async function runLifecycleAction(action: LifecycleAction, eventId: strin
   if (error) throw error;
 }
 
+export type EventStats = Database['public']['Functions']['admin_event_stats']['Returns'][number];
+
+export async function fetchEventStats(eventId: string): Promise<EventStats | null> {
+  const { data, error } = await supabase.rpc('admin_event_stats', { p_event_id: eventId });
+  if (error) throw error;
+  return data?.[0] ?? null;
+}
+
 export async function fetchDrawSummary(eventId: string): Promise<DrawSummary | null> {
   const { data, error } = await supabase.rpc('draw_summary', { p_event_id: eventId });
   if (error) throw error;

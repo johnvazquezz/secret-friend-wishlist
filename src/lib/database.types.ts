@@ -494,6 +494,19 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      admin_event_stats: {
+        Args: { p_event_id: string };
+        Returns: {
+          confirmed: number;
+          conversations_started: number;
+          declined: number;
+          invited: number;
+          messages_total: number;
+          pending_password: number;
+          with_preferences: number;
+          with_wishlist: number;
+        }[];
+      };
       admin_set_participation: {
         Args: {
           p_event_id: string;

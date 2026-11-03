@@ -2,7 +2,6 @@ import type { Session } from '@supabase/supabase-js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router-dom';
-import { providerFutureFlags, routerFutureFlags } from '../app/routerConfig';
 import { AuthContext, type AuthState } from '../features/auth/AuthContext';
 import type { Profile } from '../features/profile/api';
 
@@ -44,12 +43,11 @@ export function renderRoutes(
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(routes, {
     initialEntries: [initialPath],
-    future: routerFutureFlags,
   });
   const result = render(
     <QueryClientProvider client={queryClient}>
       <AuthContext.Provider value={auth}>
-        <RouterProvider router={router} future={providerFutureFlags} />
+        <RouterProvider router={router} />
       </AuthContext.Provider>
     </QueryClientProvider>,
   );

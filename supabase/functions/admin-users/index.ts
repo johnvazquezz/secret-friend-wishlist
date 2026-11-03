@@ -9,7 +9,10 @@
 //   { action: 'set_role',       user_id, role: 'participant' | 'admin' }
 //   { action: 'set_active',     user_id, active: boolean }
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.57.4';
-import { z } from 'npm:zod@3.25.76';
+import { z } from 'npm:zod@4.6.7';
+
+// 150 usuarios ≈ 30 KB: cualquier cuerpo mucho mayor se rechaza antes de parsearlo.
+const MAX_BODY_BYTES = 64 * 1024;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -107,7 +110,17 @@ Deno.serve(async (req) => {
   try {
     const actorId = await requireAdmin(req, admin);
 
-    const parsed = requestSchema.safeParse(await req.json().catch(() => null));
+    const raw = await req.text();
+    if (new TextEncoder().encode(raw).length > MAX_BODY_BYTES) {
+      return json({ error: 'Petición demasiado grande' }, 413);
+    }
+    let payload: unknown = null;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      /* se valida abajo */
+    }
+    const parsed = requestSchema.safeParse(payload);
     if (!parsed.success) {
       return json({ error: 'Datos inválidos', issues: parsed.error.issues }, 400);
     }

@@ -1,13 +1,17 @@
 # Secret Friend Wishlist
 
-Aplicación web para organizar el **Amigo Secreto** de la empresa. Está en evolución: hoy muestra las tarjetas de deseos del equipo; el roadmap incluye login, sorteo, wishlist, chat privado y panel de administración.
+Aplicación web para organizar el **Amigo Secreto** de la empresa (30–100 personas): cuentas creadas
+por el organizador, sorteo **totalmente privado**, listas de deseos, gustos personales, chat
+anónimo en tiempo real, notificaciones y panel de administración.
+
+📚 **Documentación:** [Despliegue](docs/DESPLIEGUE.md) · [Guía del organizador](docs/GUIA-ORGANIZADOR.md) · [Seguridad y privacidad](docs/SEGURIDAD.md) · [Pruebas E2E](e2e/README.md)
 
 ## 🧩 Stack
 
 - **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS
-- **Datos/estado:** React Router, TanStack Query, Zod
-- **Backend:** Supabase (PostgreSQL, Auth, Storage, Realtime)
-- **Calidad:** ESLint, Prettier, Vitest + Testing Library, GitHub Actions
+- **Datos/estado:** React Router 7, TanStack Query, Zod 4
+- **Backend:** Supabase (PostgreSQL + RLS, Auth, Storage, Realtime, Edge Functions, pg_cron)
+- **Calidad:** ESLint, Prettier, Vitest + Testing Library, pgTAP, E2E con Supabase real, GitHub Actions
 - **Despliegue:** Vercel (`vercel.json` con rewrite SPA y cabeceras de seguridad)
 
 ## 📁 Estructura
@@ -19,8 +23,12 @@ src/
   features/       Un módulo por funcionalidad (api.ts, hooks.ts, componentes, tests)
   lib/            Cliente Supabase, tipos de BD, validación de entorno, errores
 supabase/
-  migrations/     Migraciones SQL versionadas
+  migrations/     Migraciones SQL versionadas (esquema, RLS, funciones)
+  functions/      Edge Function admin-users (única que usa la service role)
+  tests/database/ Pruebas pgTAP de seguridad y del sorteo
   seed.sql        Datos de ejemplo para desarrollo local
+e2e/              Pruebas de extremo a extremo (API y navegador)
+docs/             Despliegue, guía del organizador y seguridad
 ```
 
 ## 💻 Requisitos
@@ -120,23 +128,10 @@ Campana en la cabecera, actualizada en tiempo real. Las genera la base de datos:
 
 Los mensajes del chat no generan notificaciones: tienen su propio contador en *Mensajes*.
 
-## ☁️ Puesta en producción (Supabase)
+## ☁️ Puesta en producción
 
-1. Enlaza el proyecto: `npx supabase link --project-ref <ref>`.
-2. Aplica migraciones: `npx supabase db push`.
-3. Despliega la función: `npx supabase functions deploy admin-users`.
-4. En el dashboard → *Authentication → Sign In / Providers*: desactiva **Allow new users to sign up**,
-   deja **Email** habilitado, longitud mínima de contraseña **10** y requisito **letras y dígitos**.
-5. Crea el primer admin: *Authentication → Users → Add user* (marca *Auto Confirm*) y luego en el
-   *SQL Editor*:
-
-   ```sql
-   update public.profiles
-   set role = 'admin', must_change_password = false
-   where email = 'tu-email@empresa.com';
-   ```
-
-6. En Vercel configura `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` del proyecto.
+Paso a paso en [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md) (Supabase, primer admin, Vercel y
+comprobación final).
 
 ## ✅ Scripts
 
@@ -147,7 +142,9 @@ Los mensajes del chat no generan notificaciones: tienen su propio contador en *M
 | `npm test`               | Tests (Vitest)                                   |
 | `npm run check`          | Formato + tipos + lint + tests (lo mismo que CI) |
 | `npm run format`         | Formatea el código con Prettier                  |
-| `npm run db:test`        | Pruebas pgTAP de RLS y permisos                  |
+| `npm run db:test`        | Pruebas pgTAP de RLS, permisos y sorteo          |
+| `npm run test:e2e`       | E2E contra Supabase local (API, Auth, Realtime)  |
+| `npm run test:e2e:ui`    | E2E en el navegador (con `npm run dev` en marcha) |
 
 ## 🔄 Workflow
 
