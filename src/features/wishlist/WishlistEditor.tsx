@@ -13,13 +13,7 @@ import {
 import WishlistItemForm from './WishlistItemForm';
 import { WishlistItemContent } from './WishlistView';
 
-export default function WishlistEditor({
-  items,
-  currency,
-}: {
-  items: WishlistItem[];
-  currency?: string;
-}) {
+export default function WishlistEditor({ items }: { items: WishlistItem[] }) {
   const create = useCreateWishlistItem();
   const update = useUpdateWishlistItem();
   const remove = useDeleteWishlistItem();
@@ -57,7 +51,6 @@ export default function WishlistEditor({
             <li key={item.id} className="py-3">
               <WishlistItemContent
                 item={item}
-                currency={currency}
                 actions={
                   <div className="flex items-start gap-1 shrink-0">
                     <button

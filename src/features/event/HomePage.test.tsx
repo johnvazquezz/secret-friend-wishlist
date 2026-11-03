@@ -22,9 +22,7 @@ vi.mock('../wishlist/api', () => ({
       id: 'w1',
       user_id: 'user-2',
       title: 'Taza de café',
-      url: 'https://tienda.com/taza',
       notes: null,
-      price_hint: 10,
       priority: 1,
       position: 0,
       created_at: '2026-11-01T00:00:00Z',
@@ -144,10 +142,6 @@ describe('HomePage', () => {
     expect(screen.getByText('Luis Gómez')).toBeInTheDocument();
     expect(mocks.assignment).toHaveBeenCalledWith('event-1');
     expect(await screen.findByText('Taza de café')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'tienda.com' })).toHaveAttribute(
-      'rel',
-      'noopener noreferrer nofollow',
-    );
     expect(screen.getByText('Café')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Ocultar' }));

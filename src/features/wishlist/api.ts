@@ -9,9 +9,7 @@ export type Preferences = Pick<
 
 export interface WishlistItemInput {
   title: string;
-  url: string | null;
   notes: string | null;
-  price_hint: number | null;
   priority: number;
 }
 

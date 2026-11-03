@@ -6,7 +6,6 @@ import ErrorState from '../../components/ui/ErrorState';
 import Spinner from '../../components/ui/Spinner';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../auth/useAuth';
-import { useActiveEvent } from '../event/hooks';
 import { useAvatarUrls, useProfiles } from '../profile/hooks';
 import { useAllWishlists } from './hooks';
 import WishlistView from './WishlistView';
@@ -16,7 +15,6 @@ export default function WishesPage() {
   const { profile: me } = useAuth();
   const profiles = useProfiles();
   const wishlists = useAllWishlists();
-  const currency = useActiveEvent().data?.currency;
   const [query, setQuery] = useState('');
   const active = (profiles.data ?? []).filter((p) => p.is_active);
   const { data: urls } = useAvatarUrls(active.map((p) => p.avatar_path));
@@ -111,7 +109,7 @@ export default function WishesPage() {
               </div>
             </div>
             <div className="p-5 flex-1">
-              <WishlistView items={wishlists.data[p.id] ?? []} currency={currency} />
+              <WishlistView items={wishlists.data[p.id] ?? []} />
             </div>
           </article>
         ))}

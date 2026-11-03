@@ -36,9 +36,7 @@ function item(id: string, title: string, position: number): WishlistItem {
     id,
     user_id: 'user-1',
     title,
-    url: null,
     notes: null,
-    price_hint: null,
     priority: 2,
     position,
     created_at: '2026-11-01T00:00:00Z',
@@ -58,30 +56,22 @@ describe('MyListPage', () => {
     renderRoutes(routes, '/mi-lista');
 
     await userEvent.type(await screen.findByLabelText('¿Qué te gustaría?'), 'Audífonos');
-    await userEvent.type(screen.getByLabelText('Enlace (opcional)'), 'https://tienda.com/a');
+    await userEvent.type(screen.getByLabelText('Detalles (opcional)'), 'Inalámbricos');
     await userEvent.selectOptions(screen.getByLabelText('Prioridad'), '1');
     await userEvent.click(screen.getByRole('button', { name: 'Añadir a mi lista' }));
 
     expect(mocks.create).toHaveBeenCalledWith(
-      {
-        title: 'Audífonos',
-        url: 'https://tienda.com/a',
-        notes: null,
-        price_hint: null,
-        priority: 1,
-      },
+      { title: 'Audífonos', notes: 'Inalámbricos', priority: 1 },
       0,
     );
   });
 
-  it('valida enlaces inseguros sin llamar al servidor', async () => {
+  it('el formulario ya no pide enlace ni precio', async () => {
     mocks.wishlist.mockResolvedValue([]);
     renderRoutes(routes, '/mi-lista');
-    await userEvent.type(await screen.findByLabelText('¿Qué te gustaría?'), 'X');
-    await userEvent.type(screen.getByLabelText('Enlace (opcional)'), 'javascript:alert(1)');
-    await userEvent.click(screen.getByRole('button', { name: 'Añadir a mi lista' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('https://');
-    expect(mocks.create).not.toHaveBeenCalled();
+    await screen.findByLabelText('¿Qué te gustaría?');
+    expect(screen.queryByLabelText(/Enlace/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Precio/)).not.toBeInTheDocument();
   });
 
   it('reordena los deseos', async () => {

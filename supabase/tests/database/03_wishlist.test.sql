@@ -1,7 +1,7 @@
 -- Pruebas de la lista de deseos y de los gustos personales (pgTAP).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(20);
+select plan(19);
 
 create function pg_temp.login_as(user_id uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
@@ -29,7 +29,7 @@ reset role;
 -- ---------------------------------------------------------------------------
 select pg_temp.login_as('00000000-0000-4000-8000-000000000002');
 select lives_ok(
-  $$ insert into public.wishlist_items (title, url, priority) values ('Libro de cocina', 'https://example.com/libro', 1) $$,
+  $$ insert into public.wishlist_items (title, priority) values ('Libro de cocina', 1) $$,
   'agrega un deseo propio'
 );
 select is(
@@ -39,10 +39,6 @@ select is(
 select throws_ok(
   $$ insert into public.wishlist_items (user_id, title) values ('00000000-0000-4000-8000-000000000003', 'x') $$,
   '42501', null, 'no puede crear deseos a nombre de otro'
-);
-select throws_ok(
-  $$ insert into public.wishlist_items (title, url) values ('x', 'javascript:alert(1)') $$,
-  '23514', null, 'rechaza URLs que no son http(s)'
 );
 select throws_ok(
   $$ insert into public.wishlist_items (title) values ('   ') $$,

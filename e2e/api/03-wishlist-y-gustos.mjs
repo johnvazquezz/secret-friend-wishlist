@@ -29,12 +29,12 @@ const nameOf = Object.fromEntries(Object.entries(idOf).map(([n, id]) => [id, n])
 
 // Wishlist
 const add = await c.ana.from('wishlist_items').insert([
-  { title: 'Libro de cocina', url: 'https://example.com/libro', priority: 1, position: 0 },
-  { title: 'Taza', url: null, priority: 2, position: 1 },
+  { title: 'Libro de cocina', notes: 'Italiana', priority: 1, position: 0 },
+  { title: 'Taza', notes: null, priority: 2, position: 1 },
 ]);
 check(!add.error, `Ana añade 2 deseos ${add.error?.message ?? ''}`);
-const bad = await c.ana.from('wishlist_items').insert({ title: 'x', url: 'javascript:alert(1)' });
-check(!!bad.error, 'la BD rechaza enlaces javascript:');
+const bad = await c.ana.from('wishlist_items').insert({ title: 'x', url: 'https://example.com' });
+check(!!bad.error, 'la lista ya no admite enlaces');
 const { data: seen } = await c.luis.from('wishlist_items').select('title').eq('user_id', idOf.ana);
 check(seen?.length === 2, 'Luis ve la lista de Ana');
 const hijack = await c.luis

@@ -2,7 +2,6 @@ import ErrorState from '../../components/ui/ErrorState';
 import Spinner from '../../components/ui/Spinner';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../auth/useAuth';
-import { useActiveEvent } from '../event/hooks';
 import { useMyPreferences, useWishlist } from './hooks';
 import PreferencesForm from './PreferencesForm';
 import WishlistEditor from './WishlistEditor';
@@ -11,7 +10,6 @@ export default function MyListPage() {
   const { profile } = useAuth();
   const wishlist = useWishlist(profile?.id);
   const preferences = useMyPreferences();
-  const currency = useActiveEvent().data?.currency;
 
   if (wishlist.isPending || preferences.isPending) {
     return (
@@ -41,7 +39,7 @@ export default function MyListPage() {
         <p className="text-sm text-gray-500 mb-4">
           Todo el equipo puede verla: así nadie sabe quién te regala. Ordénala por preferencia.
         </p>
-        <WishlistEditor items={wishlist.data} currency={currency} />
+        <WishlistEditor items={wishlist.data} />
       </section>
 
       <section className="bg-white rounded-xl shadow-lg p-6">

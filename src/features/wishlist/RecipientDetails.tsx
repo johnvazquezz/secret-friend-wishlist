@@ -7,7 +7,6 @@ interface RecipientDetailsProps {
   eventId: string;
   receiverId: string;
   firstName: string;
-  currency?: string;
 }
 
 const PREFERENCE_LABELS: [keyof Preferences, string][] = [
@@ -23,7 +22,6 @@ export default function RecipientDetails({
   eventId,
   receiverId,
   firstName,
-  currency,
 }: RecipientDetailsProps) {
   const wishlist = useWishlist(receiverId);
   const preferences = useRecipientPreferences(eventId, true);
@@ -39,7 +37,6 @@ export default function RecipientDetails({
         <h3 className="text-lg font-semibold text-gray-800 mb-3">Lista de deseos de {firstName}</h3>
         <WishlistView
           items={wishlist.data ?? []}
-          currency={currency}
           emptyMessage={`${firstName} todavía no ha añadido deseos. ¡Vuelve a mirar más adelante!`}
         />
       </div>

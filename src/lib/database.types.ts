@@ -447,11 +447,9 @@ export type Database = {
           id: string;
           notes: string | null;
           position: number;
-          price_hint: number | null;
           priority: number;
           title: string;
           updated_at: string;
-          url: string | null;
           user_id: string;
         };
         ComputedFields: never;
@@ -460,11 +458,9 @@ export type Database = {
           id?: string;
           notes?: string | null;
           position?: number;
-          price_hint?: number | null;
           priority?: number;
           title: string;
           updated_at?: string;
-          url?: string | null;
           user_id?: string;
         };
         Update: {
@@ -472,11 +468,9 @@ export type Database = {
           id?: string;
           notes?: string | null;
           position?: number;
-          price_hint?: number | null;
           priority?: number;
           title?: string;
           updated_at?: string;
-          url?: string | null;
           user_id?: string;
         };
         Relationships: [

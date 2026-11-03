@@ -8,11 +8,10 @@ import type { MyAssignment } from './api';
 interface SecretFriendCardProps {
   assignment: MyAssignment;
   eventId: string;
-  currency?: string;
 }
 
 /** Muestra a quién le regala el usuario. Oculto por defecto para evitar miradas indiscretas. */
-export default function SecretFriendCard({ assignment, eventId, currency }: SecretFriendCardProps) {
+export default function SecretFriendCard({ assignment, eventId }: SecretFriendCardProps) {
   const [visible, setVisible] = useState(false);
   const { data: urls } = useAvatarUrls(visible ? [assignment.avatar_path] : []);
 
@@ -37,7 +36,6 @@ export default function SecretFriendCard({ assignment, eventId, currency }: Secr
               eventId={eventId}
               receiverId={assignment.receiver_id}
               firstName={assignment.full_name.split(' ')[0]}
-              currency={currency}
             />
           </div>
         ) : (

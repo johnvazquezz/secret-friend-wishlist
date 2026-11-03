@@ -15,9 +15,7 @@ interface WishlistItemFormProps {
 function initial(item?: WishlistItem): WishlistItemFormValues {
   return {
     title: item?.title ?? '',
-    url: item?.url ?? '',
     notes: item?.notes ?? '',
-    price_hint: item?.price_hint != null ? String(item.price_hint) : '',
     priority: String(item?.priority ?? 2),
   };
 }
@@ -64,25 +62,6 @@ export default function WishlistItemForm({
         value={values.title}
         onChange={set('title')}
       />
-      <div className="grid gap-3 sm:grid-cols-2">
-        <TextField
-          label="Enlace (opcional)"
-          type="url"
-          placeholder="https://…"
-          maxLength={500}
-          value={values.url}
-          onChange={set('url')}
-        />
-        <TextField
-          label="Precio aproximado (opcional)"
-          type="number"
-          min={0}
-          step="0.01"
-          inputMode="decimal"
-          value={values.price_hint}
-          onChange={set('price_hint')}
-        />
-      </div>
       <TextField
         label="Detalles (opcional)"
         placeholder="Color, talla, modelo…"

@@ -1,37 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { isSafeUrl, parsePreferences, parseWishlistItem } from './schemas';
+import { parsePreferences, parseWishlistItem } from './schemas';
 
-const base = { title: 'Libro', url: '', notes: '', price_hint: '', priority: '2' };
-
-describe('isSafeUrl', () => {
-  it.each([
-    ['https://tienda.com/x', true],
-    ['http://tienda.com', true],
-    ['javascript:alert(1)', false],
-    ['data:text/html,hola', false],
-    ['tienda.com', false],
-  ])('%s → %s', (url, expected) => {
-    expect(isSafeUrl(url)).toBe(expected);
-  });
-});
+const base = { title: 'Libro', notes: '', priority: '2' };
 
 describe('parseWishlistItem', () => {
-  it('normaliza vacíos y números', () => {
-    expect(parseWishlistItem({ ...base, price_hint: '15.5' })).toEqual({
+  it('normaliza vacíos y la prioridad', () => {
+    expect(parseWishlistItem(base)).toEqual({
       ok: true,
-      data: { title: 'Libro', url: null, notes: null, price_hint: 15.5, priority: 2 },
-    });
-  });
-
-  it('rechaza enlaces peligrosos', () => {
-    expect(parseWishlistItem({ ...base, url: 'javascript:alert(1)' })).toEqual({
-      ok: false,
-      error: 'El enlace debe empezar por https://',
+      data: { title: 'Libro', notes: null, priority: 2 },
     });
   });
 
   it('exige título', () => {
     expect(parseWishlistItem({ ...base, title: ' ' }).ok).toBe(false);
+  });
+
+  it('rechaza prioridades fuera de 1–3', () => {
+    expect(parseWishlistItem({ ...base, priority: '7' }).ok).toBe(false);
   });
 });
 

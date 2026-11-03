@@ -35,8 +35,8 @@ usa la clave pública (anon); la `service_role` solo existe en la Edge Function.
   (`gen_random_uuid`), no repetible tras publicar y registrada en auditoría.
 - Storage: bucket privado; cada usuario solo escribe en `avatars/{su id}/`; se sirve con URLs
   firmadas de 1 h.
-- Enlaces: deseos solo `http(s)` (validado en BD y cliente, `rel="noopener noreferrer"`);
-  notificaciones solo rutas internas (`/x`, nunca `//dominio`).
+- Enlaces: la lista de deseos no admite enlaces; las notificaciones solo enlazan a rutas internas
+  (`/x`, nunca `//dominio`).
 - Edge Function: verifica JWT y rol admin en cada petición, valida con Zod, limita el cuerpo a
   64 KB y audita cada acción.
 - Límites: 20 deseos por persona, 20 mensajes por minuto por conversación.
@@ -44,7 +44,7 @@ usa la clave pública (anon); la `service_role` solo existe en la Edge Function.
 
 ## Pruebas
 
-- `supabase/tests/database/*.test.sql` (pgTAP, 108 pruebas): cada regla anterior tiene pruebas
+- `supabase/tests/database/*.test.sql` (pgTAP, 107 pruebas): cada regla anterior tiene pruebas
   que intentan saltársela (anónimo, otro participante, admin) y esperan el fallo, más 300 sorteos
   aleatorios verificados.
 - `e2e/`: flujos completos contra Supabase real, incluido Realtime.
