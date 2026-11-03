@@ -29,6 +29,7 @@ export type Database = {
           event_id: string;
           giver_id: string;
           receiver_id: string;
+          thread_id: string;
         };
         ComputedFields: never;
         Insert: {
@@ -36,12 +37,14 @@ export type Database = {
           event_id: string;
           giver_id: string;
           receiver_id: string;
+          thread_id?: string;
         };
         Update: {
           created_at?: string;
           event_id?: string;
           giver_id?: string;
           receiver_id?: string;
+          thread_id?: string;
         };
         Relationships: [
           {
@@ -250,6 +253,42 @@ export type Database = {
           },
         ];
       };
+      messages: {
+        Row: {
+          author_role: Database['public']['Enums']['chat_role'];
+          body: string;
+          created_at: string;
+          id: string;
+          read_at: string | null;
+          thread_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          author_role: Database['public']['Enums']['chat_role'];
+          body: string;
+          created_at?: string;
+          id?: string;
+          read_at?: string | null;
+          thread_id: string;
+        };
+        Update: {
+          author_role?: Database['public']['Enums']['chat_role'];
+          body?: string;
+          created_at?: string;
+          id?: string;
+          read_at?: string | null;
+          thread_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'messages_thread_id_fkey';
+            columns: ['thread_id'];
+            isOneToOne: false;
+            referencedRelation: 'assignments';
+            referencedColumns: ['thread_id'];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_path: string | null;
@@ -448,10 +487,30 @@ export type Database = {
           sizes: string;
         }[];
       };
+      get_my_threads: {
+        Args: { p_event_id: string };
+        Returns: {
+          last_message_at: string;
+          my_role: Database['public']['Enums']['chat_role'];
+          partner_avatar_path: string;
+          partner_name: string;
+          thread_id: string;
+          unread: number;
+        }[];
+      };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       lock_event: {
         Args: { p_event_id: string; p_expected: Database['public']['Enums']['event_status'][] };
         Returns: Database['public']['Enums']['event_status'];
+      };
+      mark_thread_read: { Args: { p_thread_id: string }; Returns: undefined };
+      my_thread_id: {
+        Args: { p_as: Database['public']['Enums']['chat_role']; p_event_id: string };
+        Returns: string;
+      };
+      my_thread_role: {
+        Args: { p_thread_id: string };
+        Returns: Database['public']['Enums']['chat_role'];
       };
       open_event: { Args: { p_event_id: string }; Returns: undefined };
       publish_draw: { Args: { p_event_id: string }; Returns: undefined };
@@ -462,6 +521,14 @@ export type Database = {
         Returns: undefined;
       };
       run_draw: { Args: { p_event_id: string }; Returns: number };
+      send_message: {
+        Args: {
+          p_as: Database['public']['Enums']['chat_role'];
+          p_body: string;
+          p_event_id: string;
+        };
+        Returns: string;
+      };
       write_audit: {
         Args: { p_action: string; p_details?: Json; p_target: string };
         Returns: undefined;
@@ -469,6 +536,7 @@ export type Database = {
     };
     Enums: {
       app_role: 'participant' | 'admin';
+      chat_role: 'giver' | 'receiver';
       event_status: 'draft' | 'open' | 'drawn' | 'published' | 'finished';
       participation_status: 'invited' | 'confirmed' | 'declined';
     };
@@ -586,6 +654,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ['participant', 'admin'],
+      chat_role: ['giver', 'receiver'],
       event_status: ['draft', 'open', 'drawn', 'published', 'finished'],
       participation_status: ['invited', 'confirmed', 'declined'],
     },

@@ -96,6 +96,18 @@ Usuarios de prueba del seed (contraseña `Amigo2026local`):
   de datos directamente. Limita ese acceso a la persona técnica responsable y, si es posible, que no
   sea participante.
 
+## 💬 Chat anónimo
+
+Con el sorteo publicado, cada persona tiene dos conversaciones en *Mensajes*:
+
+- **Con su amigo secreto** (anónimo): no sabe quién es; los mensajes solo indican el rol
+  ("quien regala" / "quien recibe"), nunca la persona.
+- **Con la persona a quien le regala**, que no sabe que es ella.
+
+Nadie más, tampoco el admin, puede leer las conversaciones. Los mensajes llegan en tiempo real
+(Supabase Realtime, que aplica la misma RLS) y hay un aviso de no leídos en la navegación. Límite
+anti-spam: 20 mensajes por minuto. Al finalizar el evento el chat queda en solo lectura.
+
 ## ☁️ Puesta en producción (Supabase)
 
 1. Enlaza el proyecto: `npx supabase link --project-ref <ref>`.

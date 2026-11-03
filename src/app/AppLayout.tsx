@@ -2,6 +2,8 @@ import { Gift, HandHeart, LogOut } from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import Avatar from '../components/ui/Avatar';
 import { useAuth } from '../features/auth/useAuth';
+import { useChatRealtime, useMyThreads } from '../features/chat/hooks';
+import { useActiveEvent } from '../features/event/hooks';
 import { useAvatarUrls } from '../features/profile/hooks';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -12,6 +14,13 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 export default function AppLayout() {
   const { profile, isAdmin, signOut } = useAuth();
   const { data: urls } = useAvatarUrls([profile?.avatar_path]);
+  const event = useActiveEvent().data;
+  const threads = useMyThreads(event?.id, event?.status).data ?? [];
+  useChatRealtime(
+    event?.id,
+    threads.map((t) => t.thread_id),
+  );
+  const unread = threads.reduce((sum, t) => sum + t.unread, 0);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary/20 via-white to-primary/10">
@@ -34,6 +43,21 @@ export default function AppLayout() {
             <NavLink to="/deseos" className={navLinkClass}>
               Deseos
             </NavLink>
+            {threads.length > 0 && (
+              <NavLink to="/mensajes" className={navLinkClass}>
+                <span className="inline-flex items-center gap-1">
+                  Mensajes
+                  {unread > 0 && (
+                    <span
+                      aria-label={`${unread} sin leer`}
+                      className="min-w-5 h-5 px-1.5 rounded-full bg-amber-400 text-gray-900 text-xs font-bold inline-flex items-center justify-center"
+                    >
+                      {unread}
+                    </span>
+                  )}
+                </span>
+              </NavLink>
+            )}
             <NavLink to="/perfil" className={navLinkClass}>
               Mi perfil
             </NavLink>

@@ -18,6 +18,11 @@ const DB_ERROR_MESSAGES: Record<string, string> = {
     'Con las exclusiones actuales no hay un sorteo posible. Quita alguna exclusión e inténtalo de nuevo.',
   not_invited: 'Esta persona no está en la lista de participantes.',
   registration_closed: 'El plazo para confirmar la participación ya terminó.',
+  wishlist_limit: 'Llegaste al máximo de 20 deseos.',
+  chat_closed: 'El chat solo está abierto mientras el sorteo está publicado.',
+  no_thread: 'No tienes acceso a esta conversación.',
+  invalid_message: 'El mensaje debe tener entre 1 y 1000 caracteres.',
+  rate_limited: 'Estás enviando mensajes muy rápido. Espera un momento.',
 };
 
 const PG_ERROR_MESSAGES: Record<string, string> = {

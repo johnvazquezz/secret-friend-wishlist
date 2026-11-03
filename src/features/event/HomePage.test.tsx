@@ -11,6 +11,11 @@ import {
   type EventRow,
 } from './api';
 
+vi.mock('../chat/api', () => ({
+  fetchThreads: vi.fn().mockResolvedValue([]),
+  subscribeToThreads: vi.fn(() => () => {}),
+}));
+
 vi.mock('../wishlist/api', () => ({
   fetchWishlist: vi.fn().mockResolvedValue([
     {
