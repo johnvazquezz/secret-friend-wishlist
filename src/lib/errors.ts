@@ -23,6 +23,8 @@ const DB_ERROR_MESSAGES: Record<string, string> = {
   no_thread: 'No tienes acceso a esta conversación.',
   invalid_message: 'El mensaje debe tener entre 1 y 1000 caracteres.',
   rate_limited: 'Estás enviando mensajes muy rápido. Espera un momento.',
+  invalid_announcement:
+    'El aviso necesita un título (máx. 120) y un texto de hasta 1000 caracteres.',
 };
 
 const PG_ERROR_MESSAGES: Record<string, string> = {

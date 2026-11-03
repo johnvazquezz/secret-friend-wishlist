@@ -11,6 +11,7 @@ import {
   useUpdateEvent,
 } from '../../event/hooks';
 import { useProfiles } from '../../profile/hooks';
+import AnnouncementSection from './AnnouncementSection';
 import EventForm from './EventForm';
 import ExclusionsSection from './ExclusionsSection';
 import LifecyclePanel from './LifecyclePanel';
@@ -121,6 +122,8 @@ function ManageEvent({ event }: { event: EventRow }) {
       />
 
       <ExclusionsSection event={event} participants={participants} editable={editable} />
+
+      <AnnouncementSection />
 
       <section className="bg-white rounded-xl shadow-lg p-6">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Datos del evento</h2>

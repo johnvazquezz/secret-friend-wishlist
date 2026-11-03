@@ -289,6 +289,51 @@ export type Database = {
           },
         ];
       };
+      notifications: {
+        Row: {
+          body: string | null;
+          created_at: string;
+          dedupe_key: string | null;
+          id: string;
+          kind: string;
+          link: string | null;
+          read_at: string | null;
+          title: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          body?: string | null;
+          created_at?: string;
+          dedupe_key?: string | null;
+          id?: string;
+          kind: string;
+          link?: string | null;
+          read_at?: string | null;
+          title: string;
+          user_id: string;
+        };
+        Update: {
+          body?: string | null;
+          created_at?: string;
+          dedupe_key?: string | null;
+          id?: string;
+          kind?: string;
+          link?: string | null;
+          read_at?: string | null;
+          title?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_path: string | null;
@@ -503,6 +548,7 @@ export type Database = {
         Args: { p_event_id: string; p_expected: Database['public']['Enums']['event_status'][] };
         Returns: Database['public']['Enums']['event_status'];
       };
+      mark_notifications_read: { Args: { p_ids?: string[] }; Returns: undefined };
       mark_thread_read: { Args: { p_thread_id: string }; Returns: undefined };
       my_thread_id: {
         Args: { p_as: Database['public']['Enums']['chat_role']; p_event_id: string };
@@ -511,6 +557,17 @@ export type Database = {
       my_thread_role: {
         Args: { p_thread_id: string };
         Returns: Database['public']['Enums']['chat_role'];
+      };
+      notify: {
+        Args: {
+          p_body?: string;
+          p_dedupe_key?: string;
+          p_kind: string;
+          p_link?: string;
+          p_title: string;
+          p_user_id: string;
+        };
+        Returns: undefined;
       };
       open_event: { Args: { p_event_id: string }; Returns: undefined };
       publish_draw: { Args: { p_event_id: string }; Returns: undefined };
@@ -521,6 +578,7 @@ export type Database = {
         Returns: undefined;
       };
       run_draw: { Args: { p_event_id: string }; Returns: number };
+      send_announcement: { Args: { p_body: string; p_title: string }; Returns: number };
       send_message: {
         Args: {
           p_as: Database['public']['Enums']['chat_role'];
@@ -529,6 +587,7 @@ export type Database = {
         };
         Returns: string;
       };
+      send_reminders: { Args: { p_now?: string }; Returns: number };
       write_audit: {
         Args: { p_action: string; p_details?: Json; p_target: string };
         Returns: undefined;

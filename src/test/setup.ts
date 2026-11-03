@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
-import { afterEach } from 'vitest';
+import { afterEach, vi } from 'vitest';
 
 // jsdom reemplaza AbortController/AbortSignal, pero `Request` sigue siendo el de Node (undici), que
 // rechaza señales que no son suyas. El data router de React Router crea Requests en cada
@@ -12,6 +12,15 @@ globalThis.Request = class extends NodeRequest {
     super(input, init ? { ...init, signal: undefined } : init);
   }
 } as typeof Request;
+
+// La campana de notificaciones está en todas las páginas: por defecto, sin notificaciones y sin
+// conexión Realtime. Los tests que lo necesiten pueden sobrescribir este mock.
+vi.mock('../features/notifications/api', () => ({
+  fetchNotifications: vi.fn().mockResolvedValue([]),
+  markAllNotificationsRead: vi.fn().mockResolvedValue(undefined),
+  sendAnnouncement: vi.fn(),
+  subscribeToNotifications: vi.fn(() => () => {}),
+}));
 
 afterEach(() => {
   cleanup();

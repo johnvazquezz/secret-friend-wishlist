@@ -43,7 +43,12 @@ function useInvalidateEvent() {
 // Participante
 // ---------------------------------------------------------------------------
 export function useActiveEvent() {
-  return useQuery({ queryKey: eventKeys.active(), queryFn: fetchActiveEvent });
+  return useQuery({
+    queryKey: eventKeys.active(),
+    queryFn: fetchActiveEvent,
+    // El estado del evento lo cambia el admin desde otro equipo: refrescar al volver a la pestaña.
+    refetchOnWindowFocus: true,
+  });
 }
 
 export function useMyParticipation(eventId: string | undefined, userId: string | undefined) {

@@ -4,6 +4,7 @@ import Avatar from '../components/ui/Avatar';
 import { useAuth } from '../features/auth/useAuth';
 import { useChatRealtime, useMyThreads } from '../features/chat/hooks';
 import { useActiveEvent } from '../features/event/hooks';
+import NotificationBell from '../features/notifications/NotificationBell';
 import { useAvatarUrls } from '../features/profile/hooks';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -73,7 +74,8 @@ export default function AppLayout() {
             )}
           </nav>
           {profile && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <NotificationBell userId={profile.id} />
               <Link to="/perfil" className="flex items-center gap-2" aria-label="Mi perfil">
                 <Avatar
                   name={profile.full_name}

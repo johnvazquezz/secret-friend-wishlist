@@ -59,6 +59,9 @@ export default function HomePage() {
 
   const participation = participationQuery.data ?? null;
   const assignment = assignmentQuery.data ?? null;
+  const showDeadline = !!event.registration_deadline && event.status === 'open';
+  const hasInfo =
+    !!event.exchange_at || event.budget_amount != null || !!event.location || showDeadline;
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-3xl space-y-6">
@@ -77,28 +80,30 @@ export default function HomePage() {
         <ParticipationPanel event={event} status={participation} />
       )}
 
-      <section className="bg-white rounded-2xl shadow-lg p-6 grid gap-4 sm:grid-cols-2">
-        {event.exchange_at && (
-          <Info icon={<CalendarDays className="w-5 h-5" />} label="Intercambio">
-            {formatDateTime(event.exchange_at)}
-          </Info>
-        )}
-        {event.budget_amount != null && (
-          <Info icon={<Wallet className="w-5 h-5" />} label="Presupuesto">
-            {formatMoney(event.budget_amount, event.currency)}
-          </Info>
-        )}
-        {event.location && (
-          <Info icon={<MapPin className="w-5 h-5" />} label="Lugar">
-            {event.location}
-          </Info>
-        )}
-        {event.registration_deadline && event.status === 'open' && (
-          <Info icon={<Clock className="w-5 h-5" />} label="Confirma antes de">
-            {formatDateTime(event.registration_deadline)}
-          </Info>
-        )}
-      </section>
+      {hasInfo && (
+        <section className="bg-white rounded-2xl shadow-lg p-6 grid gap-4 sm:grid-cols-2">
+          {event.exchange_at && (
+            <Info icon={<CalendarDays className="w-5 h-5" />} label="Intercambio">
+              {formatDateTime(event.exchange_at)}
+            </Info>
+          )}
+          {event.budget_amount != null && (
+            <Info icon={<Wallet className="w-5 h-5" />} label="Presupuesto">
+              {formatMoney(event.budget_amount, event.currency)}
+            </Info>
+          )}
+          {event.location && (
+            <Info icon={<MapPin className="w-5 h-5" />} label="Lugar">
+              {event.location}
+            </Info>
+          )}
+          {showDeadline && (
+            <Info icon={<Clock className="w-5 h-5" />} label="Confirma antes de">
+              {formatDateTime(event.registration_deadline!)}
+            </Info>
+          )}
+        </section>
+      )}
 
       {event.rules && (
         <section className="bg-white rounded-2xl shadow-lg p-6">

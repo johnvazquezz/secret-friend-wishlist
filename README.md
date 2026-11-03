@@ -108,6 +108,18 @@ Nadie más, tampoco el admin, puede leer las conversaciones. Los mensajes llegan
 (Supabase Realtime, que aplica la misma RLS) y hay un aviso de no leídos en la navegación. Límite
 anti-spam: 20 mensajes por minuto. Al finalizar el evento el chat queda en solo lectura.
 
+## 🔔 Notificaciones
+
+Campana en la cabecera, actualizada en tiempo real. Las genera la base de datos:
+
+- **Inscripción abierta** (y a quien se añade después).
+- **Sorteo publicado**: "¡Ya puedes ver a quién le regalas!".
+- **Recordatorios diarios** (pg_cron, 14:00 UTC): confirmar antes de la fecha límite, lista de
+  deseos vacía y cuenta atrás de los 3 últimos días antes del intercambio. Nunca se duplican.
+- **Avisos del organizador** desde *Evento › Enviar un aviso* (a todos los usuarios activos).
+
+Los mensajes del chat no generan notificaciones: tienen su propio contador en *Mensajes*.
+
 ## ☁️ Puesta en producción (Supabase)
 
 1. Enlaza el proyecto: `npx supabase link --project-ref <ref>`.
