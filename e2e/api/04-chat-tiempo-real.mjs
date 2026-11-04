@@ -89,7 +89,12 @@ check(
 // Suscripciones Realtime: receptor, tercero y admin escuchan el MISMO hilo
 const received = { receiver: [], outsider: [], admin: [] };
 function listen(client, bucket) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    // Sin límite, una suscripción que nunca confirma dejaría la prueba (y el CI) colgada.
+    const timer = setTimeout(
+      () => reject(new Error(`Realtime no confirmó la suscripción de "${bucket}" en 30 s`)),
+      30_000,
+    );
     client
       .channel(`t-${bucket}`)
       .on(
@@ -102,7 +107,12 @@ function listen(client, bucket) {
         },
         (p) => received[bucket].push(p.new),
       )
-      .on('system', {}, (p) => p.extension === 'postgres_changes' && p.status === 'ok' && resolve())
+      .on('system', {}, (p) => {
+        if (p.extension === 'postgres_changes' && p.status === 'ok') {
+          clearTimeout(timer);
+          resolve();
+        }
+      })
       .subscribe();
   });
 }
