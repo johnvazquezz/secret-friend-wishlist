@@ -39,7 +39,12 @@ for (const file of files) {
   console.log(`\n▶ ${suite}/${file}`);
   execSync('npx supabase db reset', { stdio: 'ignore' });
   await waitForStack();
-  const result = spawnSync(process.execPath, [path.join(dir, file)], { stdio: 'inherit' });
+  // Límite por prueba: si algo se cuelga, falla esa prueba en vez de bloquear todo el CI.
+  const result = spawnSync(process.execPath, [path.join(dir, file)], {
+    stdio: 'inherit',
+    timeout: 180_000,
+  });
+  if (result.error?.code === 'ETIMEDOUT') console.log(`✗ ${file} superó los 3 minutos`);
   if (result.status !== 0) failed++;
 }
 
