@@ -8,7 +8,7 @@ Calendario sugerido para un intercambio a mediados de diciembre.
    por línea. Copia las contraseñas temporales que aparecen: **solo se muestran una vez**.
 2. Entrega cada contraseña en persona o por mensaje privado de Teams. Al entrar, cada persona
    debe cambiarla.
-3. (Opcional) Sube fotos de perfil desde *Usuarios › Editar*.
+3. (Opcional) Fotos de perfil: impórtalas de Teams (abajo) o súbelas desde *Usuarios › Editar*.
 4. **Evento**: crea el evento con fecha, presupuesto, lugar y reglas. Queda en *Borrador*.
 5. *Agregar a todos* y, si hace falta, quita a quien no participe.
 6. **Exclusiones** (opcional): parejas que no deben tocarse (p. ej. pareja sentimental).
@@ -41,6 +41,23 @@ Calendario sugerido para un intercambio a mediados de diciembre.
 
 - **Finalizar evento**: queda archivado, el chat pasa a solo lectura y puedes crear el del año
   siguiente.
+
+## Fotos de perfil desde Teams
+
+Desde la carpeta del proyecto, con el CLI de Supabase con sesión iniciada y el proyecto enlazado:
+
+```bash
+npm run photos:teams -- --dry-run   # solo muestra a quién encontraría foto
+npm run photos:teams                # importa las fotos
+```
+
+- Muestra un código: ábrelo en `https://microsoft.com/devicelogin` e inicia sesión con tu cuenta
+  de la empresa. Pide solo permiso para leer perfiles básicos.
+- Busca a cada usuario de la app por su **email** y usa su foto de Microsoft 365 (la de Teams).
+- No toca a quien ya tenga foto en la app, salvo con `--overwrite`.
+- Vuelve a ejecutarlo cuando des de alta a gente nueva.
+- Si tu empresa exige aprobación de un administrador de Microsoft 365, el script lo dice; en ese
+  caso las fotos se suben a mano.
 
 ## Problemas frecuentes
 
