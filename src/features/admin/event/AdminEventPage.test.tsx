@@ -14,6 +14,7 @@ vi.mock('../../event/api', async (importOriginal) => ({
   fetchEventStats: vi.fn(),
   fetchDrawSummary: vi.fn(),
   runLifecycleAction: vi.fn(),
+  releaseRecipient: vi.fn(),
   createEvent: vi.fn(),
 }));
 vi.mock('../../profile/api', async (importOriginal) => ({
@@ -34,6 +35,7 @@ const baseEvent = {
   location: null,
   registration_deadline: null,
   exchange_at: null,
+  draw_mode: 'app',
   drawn_at: null,
   published_at: null,
   created_by: 'user-1',
@@ -117,5 +119,40 @@ describe('AdminEventPage', () => {
     renderRoutes(routes, '/admin/evento', admin());
     await userEvent.click(await screen.findByRole('button', { name: 'Publicar resultados' }));
     expect(api.runLifecycleAction).not.toHaveBeenCalled();
+  });
+
+  it('en inscripción permite indicar que el sorteo ya se hizo con papelitos', async () => {
+    api.fetchActiveEvent.mockResolvedValue({ ...baseEvent, status: 'open' });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderRoutes(routes, '/admin/evento', admin());
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'El sorteo ya se hizo (papelitos)' }),
+    );
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Nadie, tampoco tú'));
+    expect(api.runLifecycleAction).toHaveBeenCalledWith('start_manual_event', 'e1');
+  });
+
+  it('con papelitos muestra el progreso y permite liberar a una persona', async () => {
+    api.fetchActiveEvent.mockResolvedValue({
+      ...baseEvent,
+      status: 'published',
+      draw_mode: 'manual',
+    });
+    api.fetchDrawSummary.mockResolvedValue({ confirmed: 3, assigned: 1, is_valid: false });
+    api.releaseRecipient.mockResolvedValue();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderRoutes(routes, '/admin/evento', admin());
+
+    expect(
+      await screen.findByText(/1 de 3 participantes ya registraron a su amigo secreto/),
+    ).toBeInTheDocument();
+
+    await userEvent.selectOptions(screen.getByLabelText('Persona a liberar'), 'b');
+    await userEvent.click(screen.getByRole('button', { name: 'Liberar' }));
+    expect(api.releaseRecipient).toHaveBeenCalledWith('e1', 'b');
+    expect(
+      await screen.findByText('Luis vuelve a estar libre para registrarse.'),
+    ).toBeInTheDocument();
   });
 });
