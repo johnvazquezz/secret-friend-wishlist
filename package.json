@@ -24,7 +24,8 @@
     "db:test": "supabase test db",
     "functions:serve": "supabase functions serve",
     "test:e2e": "node e2e/run.mjs",
-    "test:e2e:ui": "node e2e/run.mjs --ui"
+    "test:e2e:ui": "node e2e/run.mjs --ui",
+    "photos:teams": "node scripts/import-teams-photos.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
