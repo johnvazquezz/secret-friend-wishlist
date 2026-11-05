@@ -4,11 +4,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { routes } from '../../app/routes';
 import { makeAuth, makeProfile, renderRoutes } from '../../test/utils';
 import {
+  claimRecipient,
   fetchActiveEvent,
+  fetchCanChangeMyClaim,
   fetchMyAssignment,
   fetchMyParticipation,
+  fetchParticipants,
+  releaseMyClaim,
   respondParticipation,
   type EventRow,
+  type Participant,
 } from './api';
 
 vi.mock('../chat/api', () => ({
@@ -43,6 +48,10 @@ vi.mock('./api', () => ({
   fetchMyParticipation: vi.fn(),
   fetchMyAssignment: vi.fn(),
   respondParticipation: vi.fn(),
+  fetchParticipants: vi.fn(),
+  claimRecipient: vi.fn(),
+  releaseMyClaim: vi.fn(),
+  fetchCanChangeMyClaim: vi.fn(),
 }));
 
 const mocks = {
@@ -50,7 +59,24 @@ const mocks = {
   participation: vi.mocked(fetchMyParticipation),
   assignment: vi.mocked(fetchMyAssignment),
   respond: vi.mocked(respondParticipation),
+  participants: vi.mocked(fetchParticipants),
+  claim: vi.mocked(claimRecipient),
+  release: vi.mocked(releaseMyClaim),
+  canChange: vi.mocked(fetchCanChangeMyClaim),
 };
+
+const person = (id: string, name: string, status: Participant['status'] = 'confirmed') => ({
+  user_id: id,
+  status,
+  responded_at: null,
+  profile: {
+    full_name: name,
+    email: `${id}@x.com`,
+    department: null,
+    avatar_path: null,
+    is_active: true,
+  },
+});
 
 function makeEvent(overrides: Partial<EventRow> = {}): EventRow {
   return {
@@ -64,6 +90,7 @@ function makeEvent(overrides: Partial<EventRow> = {}): EventRow {
     registration_deadline: null,
     exchange_at: '2099-12-19T18:00:00Z',
     status: 'open',
+    draw_mode: 'app',
     drawn_at: null,
     published_at: null,
     created_by: 'admin',
@@ -146,5 +173,92 @@ describe('HomePage', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Ocultar' }));
     expect(screen.queryByText('Luis Gómez')).not.toBeInTheDocument();
+  });
+
+  describe('sorteo con papelitos', () => {
+    const manual = () => makeEvent({ status: 'published', draw_mode: 'manual' });
+
+    it('pide registrar al amigo secreto, sin ofrecerse a uno mismo ni a quien no participa', async () => {
+      mocks.event.mockResolvedValue(manual());
+      mocks.participation.mockResolvedValue('confirmed');
+      mocks.assignment.mockResolvedValue(null);
+      mocks.participants.mockResolvedValue([
+        person('user-1', 'Yo Mismo'),
+        person('user-2', 'Luis Gómez'),
+        person('user-3', 'Jorge Ruiz', 'declined'),
+      ]);
+      mocks.claim.mockResolvedValue();
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      renderRoutes(routes, '/');
+
+      const select = await screen.findByLabelText('Persona de tu papelito');
+      const options = screen.getAllByRole('option').map((o) => o.textContent);
+      expect(options).toEqual(['Elegir persona…', 'Luis Gómez']);
+
+      await userEvent.selectOptions(select, 'user-2');
+      await userEvent.click(screen.getByRole('button', { name: 'Registrar' }));
+      expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Luis Gómez'));
+      expect(mocks.claim).toHaveBeenCalledWith('event-1', 'user-2');
+    });
+
+    it('si la persona ya está registrada lo explica sin decir por quién', async () => {
+      mocks.event.mockResolvedValue(manual());
+      mocks.participation.mockResolvedValue('confirmed');
+      mocks.assignment.mockResolvedValue(null);
+      mocks.participants.mockResolvedValue([person('user-2', 'Luis Gómez')]);
+      mocks.claim.mockRejectedValue({ message: 'recipient_taken', code: 'P0001' });
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      renderRoutes(routes, '/');
+
+      await userEvent.selectOptions(
+        await screen.findByLabelText('Persona de tu papelito'),
+        'user-2',
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'Registrar' }));
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Esa persona ya está registrada por otro participante',
+      );
+    });
+
+    it('permite deshacer el registro mientras no haya mensajes', async () => {
+      mocks.event.mockResolvedValue(manual());
+      mocks.participation.mockResolvedValue('confirmed');
+      mocks.assignment.mockResolvedValue({
+        receiver_id: 'user-2',
+        full_name: 'Luis Gómez',
+        department: null,
+        avatar_path: null,
+      });
+      mocks.canChange.mockResolvedValue(true);
+      mocks.release.mockResolvedValue();
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      renderRoutes(routes, '/');
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: 'Mostrar a quién le regalo' }),
+      );
+      await userEvent.click(await screen.findByRole('button', { name: 'Me equivoqué de persona' }));
+      expect(mocks.release).toHaveBeenCalledWith('event-1');
+    });
+
+    it('con mensajes ya no ofrece cambiar', async () => {
+      mocks.event.mockResolvedValue(manual());
+      mocks.participation.mockResolvedValue('confirmed');
+      mocks.assignment.mockResolvedValue({
+        receiver_id: 'user-2',
+        full_name: 'Luis Gómez',
+        department: null,
+        avatar_path: null,
+      });
+      mocks.canChange.mockResolvedValue(false);
+      renderRoutes(routes, '/');
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: 'Mostrar a quién le regalo' }),
+      );
+      expect(await screen.findByText('Luis Gómez')).toBeInTheDocument();
+      expect(mocks.canChange).toHaveBeenCalled();
+      expect(screen.queryByRole('button', { name: 'Me equivoqué de persona' })).toBeNull();
+    });
   });
 });

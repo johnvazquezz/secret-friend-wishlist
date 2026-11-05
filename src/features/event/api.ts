@@ -89,6 +89,26 @@ export async function fetchMyAssignment(eventId: string): Promise<MyAssignment |
   return data?.[0] ?? null;
 }
 
+// Sorteo hecho fuera de la app: cada participante registra a quién le regala.
+export async function claimRecipient(eventId: string, receiverId: string): Promise<void> {
+  const { error } = await supabase.rpc('claim_recipient', {
+    p_event_id: eventId,
+    p_receiver_id: receiverId,
+  });
+  if (error) throw error;
+}
+
+export async function releaseMyClaim(eventId: string): Promise<void> {
+  const { error } = await supabase.rpc('release_my_claim', { p_event_id: eventId });
+  if (error) throw error;
+}
+
+export async function fetchCanChangeMyClaim(eventId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('can_change_my_claim', { p_event_id: eventId });
+  if (error) throw error;
+  return data ?? false;
+}
+
 // ---------------------------------------------------------------------------
 // Admin
 // ---------------------------------------------------------------------------
@@ -110,10 +130,19 @@ export async function deleteEvent(eventId: string): Promise<void> {
 }
 
 export type LifecycleAction =
-  'open_event' | 'run_draw' | 'reset_draw' | 'publish_draw' | 'finish_event';
+  'open_event' | 'run_draw' | 'reset_draw' | 'publish_draw' | 'start_manual_event' | 'finish_event';
 
 export async function runLifecycleAction(action: LifecycleAction, eventId: string): Promise<void> {
   const { error } = await supabase.rpc(action, { p_event_id: eventId });
+  if (error) throw error;
+}
+
+/** Anula el registro de una persona como destinatario sin revelar quién la había registrado. */
+export async function releaseRecipient(eventId: string, receiverId: string): Promise<void> {
+  const { error } = await supabase.rpc('admin_release_recipient', {
+    p_event_id: eventId,
+    p_receiver_id: receiverId,
+  });
   if (error) throw error;
 }
 

@@ -153,6 +153,7 @@ export type Database = {
           created_by: string | null;
           currency: string;
           description: string | null;
+          draw_mode: string;
           drawn_at: string | null;
           exchange_at: string | null;
           id: string;
@@ -171,6 +172,7 @@ export type Database = {
           created_by?: string | null;
           currency?: string;
           description?: string | null;
+          draw_mode?: string;
           drawn_at?: string | null;
           exchange_at?: string | null;
           id?: string;
@@ -188,6 +190,7 @@ export type Database = {
           created_by?: string | null;
           currency?: string;
           description?: string | null;
+          draw_mode?: string;
           drawn_at?: string | null;
           exchange_at?: string | null;
           id?: string;
@@ -501,6 +504,10 @@ export type Database = {
           with_wishlist: number;
         }[];
       };
+      admin_release_recipient: {
+        Args: { p_event_id: string; p_receiver_id: string };
+        Returns: undefined;
+      };
       admin_set_participation: {
         Args: {
           p_event_id: string;
@@ -509,6 +516,8 @@ export type Database = {
         };
         Returns: undefined;
       };
+      can_change_my_claim: { Args: { p_event_id: string }; Returns: boolean };
+      claim_recipient: { Args: { p_event_id: string; p_receiver_id: string }; Returns: undefined };
       complete_password_change: { Args: Record<PropertyKey, never>; Returns: undefined };
       draw_summary: {
         Args: { p_event_id: string };
@@ -557,6 +566,7 @@ export type Database = {
       };
       mark_notifications_read: { Args: { p_ids?: string[] }; Returns: undefined };
       mark_thread_read: { Args: { p_thread_id: string }; Returns: undefined };
+      my_claim_is_locked: { Args: { p_event_id: string; p_giver: string }; Returns: boolean };
       my_thread_id: {
         Args: { p_as: Database['public']['Enums']['chat_role']; p_event_id: string };
         Returns: string;
@@ -578,7 +588,12 @@ export type Database = {
       };
       open_event: { Args: { p_event_id: string }; Returns: undefined };
       publish_draw: { Args: { p_event_id: string }; Returns: undefined };
+      release_my_claim: { Args: { p_event_id: string }; Returns: undefined };
       require_admin: { Args: Record<PropertyKey, never>; Returns: undefined };
+      require_manual_participant: {
+        Args: { p_event_id: string; p_user_id: string };
+        Returns: undefined;
+      };
       reset_draw: { Args: { p_event_id: string }; Returns: undefined };
       respond_participation: {
         Args: { p_accept: boolean; p_event_id: string };
@@ -586,6 +601,7 @@ export type Database = {
       };
       run_draw: { Args: { p_event_id: string }; Returns: number };
       send_announcement: { Args: { p_body: string; p_title: string }; Returns: number };
+      send_manual_claim_reminders: { Args: Record<PropertyKey, never>; Returns: number };
       send_message: {
         Args: {
           p_as: Database['public']['Enums']['chat_role'];
@@ -595,6 +611,7 @@ export type Database = {
         Returns: string;
       };
       send_reminders: { Args: { p_now?: string }; Returns: number };
+      start_manual_event: { Args: { p_event_id: string }; Returns: number };
       write_audit: {
         Args: { p_action: string; p_details?: Json; p_target: string };
         Returns: undefined;

@@ -33,6 +33,12 @@ usa la clave pública (anon); la `service_role` solo existe en la Edge Function.
   `avatar_path` de su perfil; nunca `role`, `is_active`, `email` ni `must_change_password`.
 - Sorteo: función única, con bloqueo `FOR UPDATE`, aleatoriedad criptográfica
   (`gen_random_uuid`), no repetible tras publicar y registrada en auditoría.
+- Sorteo con papelitos: cada participante registra a su destinatario con `claim_recipient()`. La
+  base de datos impide repetir destinatario o registrarse a uno mismo; si la persona ya está
+  registrada solo se responde "ya está registrada", nunca por quién. El admin solo ve conteos y,
+  para corregir errores, puede liberar a un destinatario sin conocer al giver (la auditoría guarda
+  solo el destinatario). Límite aceptado: alguien puede averiguar que a una persona "ya la tiene
+  alguien", lo que no revela quién.
 - Storage: bucket privado; cada usuario solo escribe en `avatars/{su id}/`; se sirve con URLs
   firmadas de 1 h.
 - Enlaces: la lista de deseos no admite enlaces; las notificaciones solo enlazan a rutas internas
@@ -44,7 +50,7 @@ usa la clave pública (anon); la `service_role` solo existe en la Edge Function.
 
 ## Pruebas
 
-- `supabase/tests/database/*.test.sql` (pgTAP, 107 pruebas): cada regla anterior tiene pruebas
+- `supabase/tests/database/*.test.sql` (pgTAP, 138 pruebas): cada regla anterior tiene pruebas
   que intentan saltársela (anónimo, otro participante, admin) y esperan el fallo, más 300 sorteos
   aleatorios verificados.
 - `e2e/`: flujos completos contra Supabase real, incluido Realtime.

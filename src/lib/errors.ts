@@ -25,6 +25,15 @@ const DB_ERROR_MESSAGES: Record<string, string> = {
   rate_limited: 'Estás enviando mensajes muy rápido. Espera un momento.',
   invalid_announcement:
     'El aviso necesita un título (máx. 120) y un texto de hasta 1000 caracteres.',
+  not_manual_event: 'Esto solo está disponible cuando el sorteo se hizo fuera de la app.',
+  not_participant: 'No estás en la lista de participantes. Habla con el organizador.',
+  cannot_claim_self: 'No puedes registrarte a ti mismo como amigo secreto.',
+  recipient_not_participant: 'Esa persona no participa en este Amigo Secreto.',
+  recipient_taken:
+    'Esa persona ya está registrada por otro participante. Revisa tu papelito o habla con el organizador.',
+  claim_locked:
+    'Ya hay mensajes en la conversación con tu amigo secreto, así que no puedes cambiarlo. Habla con el organizador.',
+  not_claimed: 'Nadie ha registrado todavía a esa persona.',
 };
 
 const PG_ERROR_MESSAGES: Record<string, string> = {
