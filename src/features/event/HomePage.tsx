@@ -1,6 +1,7 @@
 import { CalendarDays, Clock, MapPin, ScrollText, Sparkles, Wallet } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import Card, { CardHeader } from '../../components/ui/Card';
 import CountdownDisplay from '../../components/ui/CountdownDisplay';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
@@ -29,7 +30,7 @@ export default function HomePage() {
 
   if (eventQuery.isError || participationQuery.isError) {
     return (
-      <div className="container mx-auto px-4 py-12">
+      <div className="mx-auto max-w-6xl w-full px-4 py-12">
         <ErrorState
           message={`No se pudo cargar el evento. ${getErrorMessage(eventQuery.error ?? participationQuery.error)}`}
           onRetry={() => void eventQuery.refetch()}
@@ -40,14 +41,15 @@ export default function HomePage() {
 
   if (!event || event.status === 'draft') {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <Sparkles aria-hidden="true" className="w-14 h-14 text-primary mx-auto mb-4" />
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">Amigo Secreto</h1>
+      <div className="mx-auto max-w-xl w-full px-4 py-16">
+        <h1 className="sr-only">Amigo Secreto</h1>
         <EmptyState
+          icon={<Sparkles />}
+          title="Muy pronto"
           message="Todavía no hay un Amigo Secreto en marcha. ¡Pronto habrá novedades!"
           action={
             isAdmin && (
-              <Link to="/admin/evento" className="text-primary font-semibold underline">
+              <Link to="/admin/evento" className="link">
                 {event ? 'Continuar configurando el evento' : 'Crear el evento'}
               </Link>
             )
@@ -62,17 +64,28 @@ export default function HomePage() {
   const showDeadline = !!event.registration_deadline && event.status === 'open';
   const hasInfo =
     !!event.exchange_at || event.budget_amount != null || !!event.location || showDeadline;
+  const year = event.exchange_at ? new Date(event.exchange_at).getFullYear() : null;
 
   return (
-    <div className="container mx-auto px-4 py-10 max-w-3xl space-y-6">
-      <header className="text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-3">{event.name}</h1>
+    <div className="mx-auto max-w-3xl w-full px-4 py-8 sm:py-12 space-y-5">
+      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white to-primary-50 ring-1 ring-primary-100 px-6 py-10 sm:px-10 sm:py-12 text-center">
+        <Sparkles
+          aria-hidden="true"
+          className="absolute right-6 top-6 w-6 h-6 text-amber-400 motion-safe:animate-pulse"
+        />
+        <p className="eyebrow mb-3">Amigo Secreto{year ? ` ${year}` : ''}</p>
+        <h1 className="text-4xl sm:text-5xl font-bold text-stone-900 text-balance">{event.name}</h1>
         {event.description && (
-          <p className="text-lg text-gray-600 whitespace-pre-wrap">{event.description}</p>
+          <p className="mt-4 text-lg text-stone-600 whitespace-pre-wrap max-w-xl mx-auto">
+            {event.description}
+          </p>
+        )}
+        {event.exchange_at && (
+          <div className="mt-8">
+            <CountdownDisplay target={event.exchange_at} />
+          </div>
         )}
       </header>
-
-      {event.exchange_at && <CountdownDisplay target={event.exchange_at} />}
 
       {assignment ? (
         <SecretFriendCard assignment={assignment} eventId={event.id} />
@@ -81,24 +94,27 @@ export default function HomePage() {
       )}
 
       {hasInfo && (
-        <section className="bg-white rounded-2xl shadow-lg p-6 grid gap-4 sm:grid-cols-2">
+        <section
+          aria-label="Datos del intercambio"
+          className="grid gap-3 grid-cols-1 sm:grid-cols-2"
+        >
           {event.exchange_at && (
-            <Info icon={<CalendarDays className="w-5 h-5" />} label="Intercambio">
+            <Info icon={<CalendarDays />} label="Intercambio">
               {formatDateTime(event.exchange_at)}
             </Info>
           )}
           {event.budget_amount != null && (
-            <Info icon={<Wallet className="w-5 h-5" />} label="Presupuesto">
+            <Info icon={<Wallet />} label="Presupuesto">
               {formatMoney(event.budget_amount, event.currency)}
             </Info>
           )}
           {event.location && (
-            <Info icon={<MapPin className="w-5 h-5" />} label="Lugar">
+            <Info icon={<MapPin />} label="Lugar">
               {event.location}
             </Info>
           )}
           {showDeadline && (
-            <Info icon={<Clock className="w-5 h-5" />} label="Confirma antes de">
+            <Info icon={<Clock />} label="Confirma antes de">
               {formatDateTime(event.registration_deadline!)}
             </Info>
           )}
@@ -106,13 +122,10 @@ export default function HomePage() {
       )}
 
       {event.rules && (
-        <section className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-800 mb-3">
-            <ScrollText aria-hidden="true" className="w-5 h-5 text-primary" />
-            Reglas
-          </h2>
-          <p className="text-gray-700 whitespace-pre-wrap">{event.rules}</p>
-        </section>
+        <Card>
+          <CardHeader icon={<ScrollText />} title="Reglas" className="mb-3" />
+          <p className="text-stone-700 whitespace-pre-wrap leading-relaxed">{event.rules}</p>
+        </Card>
       )}
     </div>
   );
@@ -120,13 +133,16 @@ export default function HomePage() {
 
 function Info({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
   return (
-    <div className="flex gap-3">
-      <span aria-hidden="true" className="text-primary mt-0.5">
+    <div className="card p-4 flex items-center gap-4">
+      <span
+        aria-hidden="true"
+        className="w-11 h-11 rounded-xl bg-primary-50 text-primary-700 inline-flex items-center justify-center shrink-0 [&>svg]:w-5 [&>svg]:h-5"
+      >
         {icon}
       </span>
-      <div>
-        <p className="text-sm text-gray-500">{label}</p>
-        <p className="text-gray-800 font-medium">{children}</p>
+      <div className="min-w-0">
+        <p className="text-xs font-medium uppercase tracking-wide text-stone-500">{label}</p>
+        <p className="text-stone-900 font-semibold">{children}</p>
       </div>
     </div>
   );

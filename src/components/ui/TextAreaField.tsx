@@ -14,17 +14,17 @@ export default function TextAreaField({
   const id = useId();
   return (
     <div className={className}>
-      <label htmlFor={id} className="block text-gray-700 font-medium mb-2">
+      <label htmlFor={id} className="block text-sm font-medium text-stone-700 mb-1.5">
         {label}
       </label>
       <textarea
         id={id}
         aria-describedby={hint ? `${id}-hint` : undefined}
-        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none min-h-24"
+        className="input-base min-h-24"
         {...props}
       />
       {hint && (
-        <p id={`${id}-hint`} className="text-sm text-gray-500 mt-1">
+        <p id={`${id}-hint`} className="text-xs text-stone-500 mt-1.5">
           {hint}
         </p>
       )}

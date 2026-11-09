@@ -46,10 +46,10 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4">
-      <h2 className="text-2xl font-bold text-gray-800 text-center">Cambiar contraseña</h2>
+    <form onSubmit={handleSubmit} noValidate className="space-y-5">
+      <h2 className="text-2xl font-bold text-stone-900">Cambiar contraseña</h2>
       {forced && (
-        <p className="bg-primary/10 border-2 border-primary/30 rounded-lg p-4 text-gray-700">
+        <p className="text-sm bg-primary-50 ring-1 ring-inset ring-primary-200 rounded-xl px-3.5 py-3 text-primary-900">
           Hola{profile ? `, ${profile.full_name}` : ''}. Estás usando una contraseña temporal: elige
           una nueva para continuar.
         </p>
@@ -72,12 +72,12 @@ export default function ChangePasswordPage() {
         error={errors.confirm}
       />
       {formError && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="alert-error">
           {formError}
         </p>
       )}
-      <Button type="submit" disabled={submitting} className="w-full">
-        <KeyRound aria-hidden="true" className="w-5 h-5" />
+      <Button type="submit" size="lg" disabled={submitting} className="w-full">
+        <KeyRound aria-hidden="true" className="w-4 h-4" />
         {submitting ? 'Guardando...' : 'Guardar contraseña'}
       </Button>
       <div className="text-center text-sm">
@@ -85,12 +85,15 @@ export default function ChangePasswordPage() {
           <button
             type="button"
             onClick={() => void signOut()}
-            className="text-gray-500 hover:text-gray-700 underline"
+            className="text-stone-500 hover:text-stone-900 underline underline-offset-4"
           >
             Cerrar sesión
           </button>
         ) : (
-          <Link to="/perfil" className="text-gray-500 hover:text-gray-700 underline">
+          <Link
+            to="/perfil"
+            className="text-stone-500 hover:text-stone-900 underline underline-offset-4"
+          >
             Cancelar
           </Link>
         )}

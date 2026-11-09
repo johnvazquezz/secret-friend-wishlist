@@ -38,9 +38,9 @@ export default function AnnouncementSection() {
   };
 
   return (
-    <section className="bg-white rounded-xl shadow-lg p-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-1">Enviar un aviso</h2>
-      <p className="text-sm text-gray-500 mb-4">
+    <section className="card p-5 sm:p-6">
+      <h2 className="text-lg font-semibold text-stone-900 mb-1">Enviar un aviso</h2>
+      <p className="text-sm text-stone-500 mb-4">
         Aparece en la campana de notificaciones de todos. Útil para cambios de sala, horario o
         recordatorios.
       </p>
@@ -58,11 +58,11 @@ export default function AnnouncementSection() {
           onChange={(e) => setBody(e.target.value)}
         />
         {error && (
-          <p role="alert" className="text-red-600">
+          <p role="alert" className="alert-error">
             {error}
           </p>
         )}
-        {sentTo !== null && <p className="text-green-700">Aviso enviado a {sentTo} personas.</p>}
+        {sentTo !== null && <p className="alert-success">Aviso enviado a {sentTo} personas.</p>}
         <Button type="submit" disabled={send.isPending}>
           <Megaphone aria-hidden="true" className="w-5 h-5" />
           {send.isPending ? 'Enviando...' : 'Enviar aviso'}

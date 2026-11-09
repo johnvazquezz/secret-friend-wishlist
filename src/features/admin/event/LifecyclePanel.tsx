@@ -1,4 +1,4 @@
-import { CheckCircle2, Lock, RotateCcw, Shuffle } from 'lucide-react';
+import { AlertTriangle, Check, CheckCircle2, Lock, RotateCcw, Shuffle } from 'lucide-react';
 import { useState } from 'react';
 import Button from '../../../components/ui/Button';
 import { getErrorMessage } from '../../../lib/errors';
@@ -103,23 +103,47 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
   };
 
   return (
-    <section className="bg-white rounded-xl shadow-lg p-6 space-y-5">
-      <ol className="flex flex-wrap gap-2" aria-label="Estado del evento">
-        {STEPS.map((step, i) => (
-          <li
-            key={step.status}
-            aria-current={i === currentIndex ? 'step' : undefined}
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
-              i === currentIndex
-                ? 'bg-primary text-white'
-                : i < currentIndex
-                  ? 'bg-primary/10 text-primary-dark'
-                  : 'bg-gray-100 text-gray-500'
-            }`}
-          >
-            {i + 1}. {step.label}
-          </li>
-        ))}
+    <section className="card p-5 sm:p-6 space-y-5">
+      <ol className="grid grid-cols-5" aria-label="Estado del evento">
+        {STEPS.map((step, i) => {
+          const done = i < currentIndex;
+          const current = i === currentIndex;
+          return (
+            <li
+              key={step.status}
+              aria-current={current ? 'step' : undefined}
+              className="relative flex flex-col items-center gap-2 text-center"
+            >
+              {i > 0 && (
+                <span
+                  aria-hidden="true"
+                  className={`absolute top-4 right-1/2 w-full h-0.5 -translate-y-1/2 ${
+                    i <= currentIndex ? 'bg-primary-500' : 'bg-stone-200'
+                  }`}
+                />
+              )}
+              <span
+                className={`relative z-10 w-8 h-8 rounded-full inline-flex items-center justify-center text-sm font-semibold ring-4 ring-white ${
+                  current
+                    ? 'bg-primary-600 text-white shadow-sm shadow-primary-900/20'
+                    : done
+                      ? 'bg-primary-100 text-primary-800'
+                      : 'bg-stone-100 text-stone-500'
+                }`}
+              >
+                {done ? <Check aria-hidden="true" className="w-4 h-4" /> : i + 1}
+                {done && <span className="sr-only">{i + 1}.</span>}
+              </span>
+              <span
+                className={`text-[11px] sm:text-xs font-medium ${
+                  current ? 'text-stone-900' : 'text-stone-500'
+                }`}
+              >
+                {step.label}
+              </span>
+            </li>
+          );
+        })}
       </ol>
 
       <dl className="grid grid-cols-3 gap-3 text-center">
@@ -130,23 +154,28 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
 
       {showSummary && summary.data && (
         <p
-          className={`flex items-center gap-2 font-medium ${
-            summary.data.is_valid ? 'text-green-700' : 'text-red-600'
+          className={`flex items-start gap-2 ${
+            summary.data.is_valid ? 'alert-success' : 'alert-error'
           }`}
         >
-          <CheckCircle2 aria-hidden="true" className="w-5 h-5" />
+          {summary.data.is_valid ? (
+            <CheckCircle2 aria-hidden="true" className="w-4 h-4 mt-0.5 shrink-0" />
+          ) : (
+            <AlertTriangle aria-hidden="true" className="w-4 h-4 mt-0.5 shrink-0" />
+          )}
           {summary.data.is_valid
             ? `Sorteo válido: ${summary.data.assigned} de ${summary.data.confirmed} participantes tienen a quién regalar.`
             : `Revisa el sorteo: ${summary.data.assigned} asignaciones para ${summary.data.confirmed} confirmados.`}
         </p>
       )}
       {showSummary && (
-        <p className="text-sm text-gray-500">
-          🔒 Por privacidad, nadie (tampoco los administradores) puede ver quién le regala a quién.
+        <p className="note flex items-start gap-2">
+          <Lock aria-hidden="true" className="w-4 h-4 mt-0.5 shrink-0 text-stone-400" />
+          Por privacidad, nadie (tampoco los administradores) puede ver quién le regala a quién.
         </p>
       )}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2 pt-1">
         {actionsFor(event.status, pending).map((action) => {
           const Icon = icons[action.action];
           return (
@@ -156,14 +185,14 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
               disabled={lifecycle.isPending}
               onClick={() => run(action)}
             >
-              {Icon && <Icon aria-hidden="true" className="w-5 h-5" />}
+              {Icon && <Icon aria-hidden="true" className="w-4 h-4" />}
               {action.label}
             </Button>
           );
         })}
       </div>
       {error && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="alert-error">
           {error}
         </p>
       )}
@@ -173,9 +202,9 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="bg-gray-50 rounded-lg p-3">
-      <dt className="text-sm text-gray-500">{label}</dt>
-      <dd className="text-2xl font-bold text-gray-800 tabular-nums">{value}</dd>
+    <div className="rounded-xl bg-stone-50 ring-1 ring-inset ring-stone-200/70 p-3 sm:p-4">
+      <dt className="text-xs font-medium text-stone-500">{label}</dt>
+      <dd className="mt-1 font-display text-2xl font-bold text-stone-900 tabular-nums">{value}</dd>
     </div>
   );
 }

@@ -43,8 +43,8 @@ export default function LoginPage() {
   };
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4">
-      <h2 className="text-2xl font-bold text-gray-800 text-center">Iniciar sesión</h2>
+    <form onSubmit={handleSubmit} noValidate className="space-y-5">
+      <h2 className="text-2xl font-bold text-stone-900">Iniciar sesión</h2>
       <TextField
         label="Email"
         type="email"
@@ -62,15 +62,15 @@ export default function LoginPage() {
         error={errors.password}
       />
       {formError && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="alert-error">
           {formError}
         </p>
       )}
-      <Button type="submit" disabled={submitting} className="w-full">
-        <LogIn aria-hidden="true" className="w-5 h-5" />
+      <Button type="submit" size="lg" disabled={submitting} className="w-full">
+        <LogIn aria-hidden="true" className="w-4 h-4" />
         {submitting ? 'Entrando...' : 'Entrar'}
       </Button>
-      <p className="text-sm text-gray-500 text-center">
+      <p className="text-sm text-stone-500 text-center pt-1">
         ¿No tienes cuenta o olvidaste tu contraseña? Pídesela al organizador del Amigo Secreto.
       </p>
     </form>

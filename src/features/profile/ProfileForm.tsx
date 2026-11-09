@@ -54,11 +54,11 @@ export default function ProfileForm({ profile, onSaved }: ProfileFormProps) {
         hint="Opcional"
       />
       {error && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="alert-error">
           {error}
         </p>
       )}
-      {saved && <p className="text-green-700">Cambios guardados.</p>}
+      {saved && <p className="alert-success">Cambios guardados.</p>}
       <Button type="submit" disabled={update.isPending}>
         <Save aria-hidden="true" className="w-5 h-5" />
         {update.isPending ? 'Guardando...' : 'Guardar'}

@@ -48,8 +48,8 @@ export default function PreferencesForm({ preferences }: { preferences: Preferen
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-4">
-      <p className="flex items-start gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
-        <Lock aria-hidden="true" className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+      <p className="note flex items-start gap-2">
+        <Lock aria-hidden="true" className="w-4 h-4 mt-0.5 shrink-0 text-primary-600" />
         Solo lo verá la persona que te regale, cuando se publique el sorteo.
       </p>
       <TextAreaField
@@ -80,13 +80,13 @@ export default function PreferencesForm({ preferences }: { preferences: Preferen
       </div>
       <TextAreaField label="Otros detalles" maxLength={1000} {...field('notes')} />
       {error && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="alert-error">
           {error}
         </p>
       )}
-      {saved && <p className="text-green-700">Gustos guardados.</p>}
+      {saved && <p className="alert-success">Gustos guardados.</p>}
       <Button type="submit" disabled={save.isPending}>
-        <Save aria-hidden="true" className="w-5 h-5" />
+        <Save aria-hidden="true" className="w-4 h-4" />
         {save.isPending ? 'Guardando...' : 'Guardar mis gustos'}
       </Button>
     </form>

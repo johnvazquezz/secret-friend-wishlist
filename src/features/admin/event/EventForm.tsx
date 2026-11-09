@@ -101,11 +101,11 @@ export default function EventForm({ event, submitLabel, disabled, onSubmit }: Ev
         {...field('rules')}
       />
       {error && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="alert-error">
           {error}
         </p>
       )}
-      {saved && <p className="text-green-700">Cambios guardados.</p>}
+      {saved && <p className="alert-success">Cambios guardados.</p>}
       {!disabled && (
         <Button type="submit" disabled={submitting}>
           <Save aria-hidden="true" className="w-5 h-5" />

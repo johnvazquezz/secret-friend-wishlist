@@ -1,4 +1,5 @@
 import { Trash2 } from 'lucide-react';
+import PageHeader from '../../../components/ui/PageHeader';
 import ErrorState from '../../../components/ui/ErrorState';
 import Spinner from '../../../components/ui/Spinner';
 import { getErrorMessage } from '../../../lib/errors';
@@ -31,7 +32,7 @@ export default function AdminEventPage() {
   }
   if (eventQuery.isError) {
     return (
-      <div className="container mx-auto px-4 py-10">
+      <div className="mx-auto w-full max-w-6xl px-4 py-10">
         <ErrorState
           message={`No se pudo cargar el evento. ${getErrorMessage(eventQuery.error)}`}
           onRetry={() => void eventQuery.refetch()}
@@ -44,12 +45,13 @@ export default function AdminEventPage() {
 
   if (!event) {
     return (
-      <div className="container mx-auto px-4 py-10 max-w-3xl">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Nuevo evento</h1>
-        <p className="text-gray-600 mb-6">
-          Crea el Amigo Secreto de este año. Quedará en borrador hasta que abras la inscripción.
-        </p>
-        <section className="bg-white rounded-xl shadow-lg p-6">
+      <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:py-12">
+        <PageHeader
+          eyebrow="Administración"
+          title="Nuevo evento"
+          description="Crea el Amigo Secreto de este año. Quedará en borrador hasta que abras la inscripción."
+        />
+        <section className="card p-5 sm:p-6">
           <EventForm
             submitLabel="Crear evento"
             onSubmit={(input) => createEvent.mutateAsync(input)}
@@ -78,7 +80,7 @@ function ManageEvent({ event }: { event: EventRow }) {
   }
   if (participantsQuery.isError || profilesQuery.isError) {
     return (
-      <div className="container mx-auto px-4 py-10">
+      <div className="mx-auto w-full max-w-6xl px-4 py-10">
         <ErrorState
           message="No se pudieron cargar los participantes."
           onRetry={() => {
@@ -98,20 +100,24 @@ function ManageEvent({ event }: { event: EventRow }) {
   };
 
   return (
-    <div className="container mx-auto px-4 py-10 max-w-4xl space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold text-gray-800">{event.name}</h1>
-        {event.status === 'draft' && (
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-red-600"
-          >
-            <Trash2 aria-hidden="true" className="w-4 h-4" />
-            Eliminar borrador
-          </button>
-        )}
-      </div>
+    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:py-12 space-y-5">
+      <PageHeader
+        eyebrow="Administración del evento"
+        title={event.name}
+        className="!mb-3"
+        actions={
+          event.status === 'draft' && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium text-stone-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+            >
+              <Trash2 aria-hidden="true" className="w-4 h-4" />
+              Eliminar borrador
+            </button>
+          )
+        }
+      />
 
       <LifecyclePanel event={event} participants={participants} />
 
@@ -128,8 +134,8 @@ function ManageEvent({ event }: { event: EventRow }) {
 
       <AnnouncementSection />
 
-      <section className="bg-white rounded-xl shadow-lg p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Datos del evento</h2>
+      <section className="card p-5 sm:p-6">
+        <h2 className="text-lg font-semibold text-stone-900 mb-4">Datos del evento</h2>
         <EventForm
           key={event.id}
           event={event}

@@ -34,19 +34,20 @@ export default function AvatarUploader({ profile, size = 'lg' }: AvatarUploaderP
   };
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
       <Avatar
         name={profile.full_name}
         url={profile.avatar_path ? urls?.[profile.avatar_path] : null}
         size={size}
+        className="ring-4 ring-stone-100"
       />
-      <div className="space-y-2">
-        <div className="flex flex-wrap gap-2">
+      <div className="space-y-3">
+        <div className="flex flex-wrap justify-center sm:justify-start gap-2">
           <button
             type="button"
             disabled={busy}
             onClick={() => inputRef.current?.click()}
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary-dark disabled:opacity-50"
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg text-sm font-semibold bg-white text-stone-800 border border-stone-300 shadow-sm hover:bg-stone-50 transition-colors disabled:opacity-50"
           >
             <Camera aria-hidden="true" className="w-4 h-4" />
             {upload.isPending ? 'Subiendo...' : profile.avatar_path ? 'Cambiar foto' : 'Subir foto'}
@@ -58,14 +59,15 @@ export default function AvatarUploader({ profile, size = 'lg' }: AvatarUploaderP
               onClick={() =>
                 remove.mutate(undefined, { onError: (err) => setError(getErrorMessage(err)) })
               }
-              className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 disabled:opacity-50"
+              className="inline-flex items-center gap-2 h-9 px-3 rounded-lg text-sm font-medium text-stone-600 hover:bg-red-50 hover:text-red-700 transition-colors disabled:opacity-50"
             >
               <Trash2 aria-hidden="true" className="w-4 h-4" />
               Quitar
             </button>
           )}
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        <p className="text-xs text-stone-500">Una imagen de hasta 10 MB. Se mostrará redonda.</p>
+        {error && <p className="alert-error">{error}</p>}
         <input
           ref={inputRef}
           type="file"

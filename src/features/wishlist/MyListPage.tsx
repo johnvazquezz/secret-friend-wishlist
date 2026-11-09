@@ -1,7 +1,11 @@
+import { ListChecks, Lock } from 'lucide-react';
+import Card, { CardHeader } from '../../components/ui/Card';
 import ErrorState from '../../components/ui/ErrorState';
+import PageHeader from '../../components/ui/PageHeader';
 import Spinner from '../../components/ui/Spinner';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../auth/useAuth';
+import { MAX_WISHLIST_ITEMS } from './api';
 import { useMyPreferences, useWishlist } from './hooks';
 import PreferencesForm from './PreferencesForm';
 import WishlistEditor from './WishlistEditor';
@@ -20,7 +24,7 @@ export default function MyListPage() {
   }
   if (wishlist.isError || preferences.isError) {
     return (
-      <div className="container mx-auto px-4 py-10">
+      <div className="mx-auto w-full max-w-6xl px-4 py-10">
         <ErrorState
           message={`No se pudo cargar tu lista. ${getErrorMessage(wishlist.error ?? preferences.error)}`}
           onRetry={() => {
@@ -33,19 +37,31 @@ export default function MyListPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-10 max-w-3xl space-y-6">
-      <section className="bg-white rounded-xl shadow-lg p-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-1">Mi lista de deseos</h1>
-        <p className="text-sm text-gray-500 mb-4">
-          Todo el equipo puede verla: así nadie sabe quién te regala. Ordénala por preferencia.
-        </p>
-        <WishlistEditor items={wishlist.data} />
-      </section>
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:py-12">
+      <PageHeader
+        eyebrow="Tu espacio"
+        title="Mi lista de deseos"
+        description="Todo el equipo puede verla: así nadie sabe quién te regala. Ordénala por preferencia."
+      />
+      <div className="space-y-5">
+        <Card>
+          <CardHeader
+            icon={<ListChecks />}
+            title="Deseos"
+            description={`${wishlist.data.length} de ${MAX_WISHLIST_ITEMS} · visibles para todo el equipo`}
+          />
+          <WishlistEditor items={wishlist.data} />
+        </Card>
 
-      <section className="bg-white rounded-xl shadow-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Mis gustos</h2>
-        <PreferencesForm preferences={preferences.data} />
-      </section>
+        <Card>
+          <CardHeader
+            icon={<Lock />}
+            title="Mis gustos"
+            description="Solo los verá quien te regale."
+          />
+          <PreferencesForm preferences={preferences.data} />
+        </Card>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,7 @@
-import { KeyRound } from 'lucide-react';
+import { Camera, ChevronRight, KeyRound, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Card, { CardHeader } from '../../components/ui/Card';
+import PageHeader from '../../components/ui/PageHeader';
 import { useAuth } from '../auth/useAuth';
 import AvatarUploader from './AvatarUploader';
 import ProfileForm from './ProfileForm';
@@ -9,30 +11,43 @@ export default function ProfilePage() {
   if (!profile) return null; // RequireAuth garantiza el perfil
 
   return (
-    <div className="container mx-auto px-4 py-10 max-w-2xl">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Mi perfil</h1>
+    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
+      <PageHeader eyebrow="Tu cuenta" title="Mi perfil" />
 
-      <section className="bg-white rounded-xl shadow-lg p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-700 mb-4">Foto</h2>
-        <AvatarUploader profile={profile} />
-      </section>
+      <div className="space-y-5">
+        <Card>
+          <CardHeader icon={<Camera />} title="Foto" />
+          <AvatarUploader profile={profile} />
+        </Card>
 
-      <section className="bg-white rounded-xl shadow-lg p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-700 mb-1">Datos personales</h2>
-        <p className="text-sm text-gray-500 mb-4">{profile.email}</p>
-        <ProfileForm profile={profile} />
-      </section>
+        <Card>
+          <CardHeader icon={<UserRound />} title="Datos personales" description={profile.email} />
+          <ProfileForm profile={profile} />
+        </Card>
 
-      <section className="bg-white rounded-xl shadow-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-700 mb-4">Seguridad</h2>
-        <Link
-          to="/cambiar-contrasena"
-          className="inline-flex items-center gap-2 font-medium text-primary hover:text-primary-dark"
-        >
-          <KeyRound aria-hidden="true" className="w-5 h-5" />
-          Cambiar contraseña
-        </Link>
-      </section>
+        <Card padded={false}>
+          <h2 className="sr-only">Seguridad</h2>
+          <Link
+            to="/cambiar-contrasena"
+            className="group flex items-center gap-3 p-5 sm:p-6 rounded-2xl hover:bg-stone-50 transition-colors"
+          >
+            <span
+              aria-hidden="true"
+              className="w-9 h-9 rounded-xl bg-primary-50 text-primary-700 inline-flex items-center justify-center"
+            >
+              <KeyRound className="w-5 h-5" />
+            </span>
+            <span className="flex-1">
+              <span className="block font-semibold text-stone-900">Cambiar contraseña</span>
+              <span className="block text-sm text-stone-500">Seguridad de tu cuenta</span>
+            </span>
+            <ChevronRight
+              aria-hidden="true"
+              className="w-5 h-5 text-stone-400 transition-transform group-hover:translate-x-0.5"
+            />
+          </Link>
+        </Card>
+      </div>
     </div>
   );
 }

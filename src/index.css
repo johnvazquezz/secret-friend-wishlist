@@ -1,3 +1,62 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-stone-50 text-stone-900 antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight;
+  }
+
+  ::selection {
+    @apply bg-primary-100 text-primary-900;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-white;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-2xl border border-stone-200/80 shadow-soft;
+  }
+
+  .input-base {
+    @apply w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-stone-900 placeholder:text-stone-400 shadow-sm transition-shadow focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-100 focus-visible:ring-offset-0 disabled:bg-stone-100 disabled:text-stone-500;
+  }
+
+  .link {
+    @apply font-medium text-primary-700 underline decoration-primary-300 underline-offset-4 transition-colors hover:text-primary-900 hover:decoration-primary-600;
+  }
+
+  .alert-error {
+    @apply text-sm text-red-700 bg-red-50 ring-1 ring-inset ring-red-200 rounded-xl px-3.5 py-2.5;
+  }
+
+  .alert-success {
+    @apply text-sm text-emerald-800 bg-emerald-50 ring-1 ring-inset ring-emerald-200 rounded-xl px-3.5 py-2.5;
+  }
+
+  .note {
+    @apply text-sm text-stone-600 bg-stone-50 ring-1 ring-inset ring-stone-200/70 rounded-xl px-3.5 py-3;
+  }
+
+  .icon-btn {
+    @apply inline-flex items-center justify-center p-2 rounded-lg text-stone-500 transition-colors hover:text-stone-900 hover:bg-stone-100 disabled:opacity-30 disabled:hover:bg-transparent;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.12em] text-primary-700;
+  }
+}

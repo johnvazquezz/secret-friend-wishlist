@@ -40,15 +40,14 @@ export default function WishlistEditor({ items }: { items: WishlistItem[] }) {
     remove.mutate(item.id, { onError });
   };
 
-  const iconButton =
-    'p-2 rounded-lg text-gray-500 hover:text-primary hover:bg-primary/10 disabled:opacity-30 disabled:hover:bg-transparent';
+  const iconButton = 'icon-btn';
 
   return (
     <div className="space-y-4">
       {items.length > 0 && (
-        <ul className="divide-y divide-gray-100">
+        <ul className="-mx-2">
           {items.map((item, index) => (
-            <li key={item.id} className="py-3">
+            <li key={item.id} className="px-2 py-3 rounded-xl hover:bg-stone-50 transition-colors">
               <WishlistItemContent
                 item={item}
                 actions={
@@ -81,7 +80,7 @@ export default function WishlistEditor({ items }: { items: WishlistItem[] }) {
                     </button>
                     <button
                       type="button"
-                      className={`${iconButton} hover:!text-red-600`}
+                      className={`${iconButton} hover:!text-red-600 hover:!bg-red-50`}
                       onClick={() => handleDelete(item)}
                       aria-label={`Quitar "${item.title}"`}
                     >
@@ -96,17 +95,17 @@ export default function WishlistEditor({ items }: { items: WishlistItem[] }) {
       )}
 
       {error && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="alert-error">
           {error}
         </p>
       )}
 
       {full ? (
-        <p className="text-sm text-gray-500">
+        <p className="note">
           Llegaste al máximo de {MAX_WISHLIST_ITEMS} deseos. Quita alguno para añadir otro.
         </p>
       ) : adding ? (
-        <div className="bg-gray-50 rounded-xl p-4">
+        <div className="rounded-2xl bg-stone-50 ring-1 ring-inset ring-stone-200/70 p-4 sm:p-5">
           <WishlistItemForm
             submitLabel="Añadir a mi lista"
             onSubmit={(input) =>
@@ -119,8 +118,12 @@ export default function WishlistEditor({ items }: { items: WishlistItem[] }) {
           />
         </div>
       ) : (
-        <Button onClick={() => setAdding(true)}>
-          <Plus aria-hidden="true" className="w-5 h-5" />
+        <Button
+          variant="secondary"
+          onClick={() => setAdding(true)}
+          className="w-full sm:w-auto border-dashed"
+        >
+          <Plus aria-hidden="true" className="w-4 h-4" />
           Añadir deseo
         </Button>
       )}

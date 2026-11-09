@@ -54,7 +54,7 @@ export default function WishlistItemForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-3">
+    <form onSubmit={handleSubmit} noValidate className="space-y-4">
       <TextField
         label="¿Qué te gustaría?"
         placeholder="Ej.: Un libro de cocina italiana"
@@ -70,14 +70,14 @@ export default function WishlistItemForm({
         onChange={set('notes')}
       />
       <div>
-        <label htmlFor={priorityId} className="block text-gray-700 font-medium mb-2">
+        <label htmlFor={priorityId} className="block text-sm font-medium text-stone-700 mb-1.5">
           Prioridad
         </label>
         <select
           id={priorityId}
           value={values.priority}
           onChange={set('priority')}
-          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none bg-white"
+          className="input-base h-11 py-0"
         >
           {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
             <option key={value} value={value}>
@@ -87,11 +87,11 @@ export default function WishlistItemForm({
         </select>
       </div>
       {error && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="alert-error">
           {error}
         </p>
       )}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2 pt-1">
         <Button type="submit" disabled={submitting}>
           {submitting ? 'Guardando...' : submitLabel}
         </Button>

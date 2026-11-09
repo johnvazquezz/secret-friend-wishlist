@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, PartyPopper, UserX, XCircle } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import Button from '../../components/ui/Button';
 import { getErrorMessage } from '../../lib/errors';
@@ -25,8 +25,8 @@ export default function ParticipationPanel({ event, status }: ParticipationPanel
 
   if (!status) {
     return (
-      <Panel>
-        <p className="text-gray-600">
+      <Panel icon={<UserX />} tone="neutral">
+        <p className="text-stone-600">
           No estás en la lista de participantes de este año. Si quieres participar, habla con el
           organizador.
         </p>
@@ -34,48 +34,59 @@ export default function ParticipationPanel({ event, status }: ParticipationPanel
     );
   }
 
+  const icon =
+    status === 'confirmed' ? (
+      <CheckCircle2 />
+    ) : status === 'declined' ? (
+      <XCircle />
+    ) : (
+      <PartyPopper />
+    );
+  const tone = status === 'confirmed' ? 'success' : status === 'declined' ? 'neutral' : 'primary';
+
   return (
-    <Panel>
+    <Panel icon={icon} tone={tone}>
       {status === 'invited' && (
-        <p className="text-lg text-gray-800 mb-4">¿Participas en el Amigo Secreto de este año?</p>
+        <p className="font-display text-xl font-semibold text-stone-900">
+          ¿Participas en el Amigo Secreto de este año?
+        </p>
       )}
       {status === 'confirmed' && (
-        <p className="text-lg text-green-700 flex items-center justify-center gap-2 mb-2">
-          <CheckCircle2 aria-hidden="true" className="w-6 h-6" />
-          ¡Estás dentro!
-        </p>
+        <p className="font-display text-xl font-semibold text-emerald-800">¡Estás dentro!</p>
       )}
       {status === 'declined' && (
-        <p className="text-lg text-gray-700 flex items-center justify-center gap-2 mb-2">
-          <XCircle aria-hidden="true" className="w-6 h-6" />
-          Indicaste que no participas este año.
-        </p>
+        <p className="text-lg font-medium text-stone-700">Indicaste que no participas este año.</p>
       )}
 
       {canRespond && (
-        <div className="flex flex-wrap justify-center gap-3 mt-2">
+        <div className="flex flex-wrap justify-center gap-3 mt-5">
           {status !== 'confirmed' && (
-            <Button onClick={() => answer(true)} disabled={respond.isPending}>
+            <Button size="lg" onClick={() => answer(true)} disabled={respond.isPending}>
               {status === 'declined' ? 'Cambiar de opinión: participo' : '¡Participo!'}
             </Button>
           )}
           {status !== 'declined' && (
-            <Button variant="secondary" onClick={() => answer(false)} disabled={respond.isPending}>
+            <Button
+              variant={status === 'confirmed' ? 'ghost' : 'secondary'}
+              size={status === 'confirmed' ? 'sm' : 'lg'}
+              onClick={() => answer(false)}
+              disabled={respond.isPending}
+            >
               {status === 'confirmed' ? 'Ya no puedo participar' : 'No participaré'}
             </Button>
           )}
         </div>
       )}
       {event.status === 'open' && deadlinePassed && status === 'invited' && (
-        <p className="text-gray-600">El plazo para confirmar terminó.</p>
+        <p className="text-stone-600 mt-2">El plazo para confirmar terminó.</p>
       )}
       {event.status === 'drawn' && status === 'confirmed' && (
-        <p className="text-gray-600 mt-2">
+        <p className="text-stone-600 mt-2">
           El sorteo ya se hizo. Pronto podrás ver aquí a quién le regalas.
         </p>
       )}
       {error && (
-        <p role="alert" className="text-red-600 mt-3">
+        <p role="alert" className="mt-4 text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">
           {error}
         </p>
       )}
@@ -83,6 +94,30 @@ export default function ParticipationPanel({ event, status }: ParticipationPanel
   );
 }
 
-function Panel({ children }: { children: ReactNode }) {
-  return <section className="bg-white rounded-2xl shadow-lg p-6 text-center">{children}</section>;
+const toneClasses = {
+  primary: 'bg-primary-50 text-primary-600',
+  success: 'bg-emerald-50 text-emerald-600',
+  neutral: 'bg-stone-100 text-stone-500',
+} as const;
+
+function Panel({
+  icon,
+  tone,
+  children,
+}: {
+  icon: ReactNode;
+  tone: keyof typeof toneClasses;
+  children: ReactNode;
+}) {
+  return (
+    <section className="card p-6 sm:p-8 text-center">
+      <span
+        aria-hidden="true"
+        className={`w-12 h-12 rounded-2xl inline-flex items-center justify-center mb-4 [&>svg]:w-6 [&>svg]:h-6 ${toneClasses[tone]}`}
+      >
+        {icon}
+      </span>
+      {children}
+    </section>
+  );
 }
