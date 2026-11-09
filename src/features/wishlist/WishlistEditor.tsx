@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import Button from '../../components/ui/Button';
+import { toast } from '../../components/ui/toast';
 import { useConfirm } from '../../components/ui/useConfirm';
 import Modal from '../../components/ui/Modal';
 import { confettiFrom } from '../../lib/confetti';
@@ -45,7 +46,10 @@ export default function WishlistEditor({ items }: { items: WishlistItem[] }) {
     });
     if (!ok) return;
     setError('');
-    remove.mutate(item.id, { onError });
+    remove.mutate(item.id, {
+      onSuccess: () => toast.success(`"${item.title}" quitado de tu lista.`),
+      onError,
+    });
   };
 
   const iconButton = 'icon-btn';

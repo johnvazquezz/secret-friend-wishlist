@@ -9,6 +9,7 @@ import {
   UserX,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from '../../../components/ui/toast';
 import { useConfirm } from '../../../components/ui/useConfirm';
 import Badge from '../../../components/ui/Badge';
 import PageHeader from '../../../components/ui/PageHeader';
@@ -124,7 +125,18 @@ export default function AdminUsersPage() {
     );
     if (!ok) return;
     setActionError('');
-    setRole.mutate({ userId: p.id, role: makeAdmin ? 'admin' : 'participant' }, { onError });
+    setRole.mutate(
+      { userId: p.id, role: makeAdmin ? 'admin' : 'participant' },
+      {
+        onSuccess: () =>
+          toast.success(
+            makeAdmin
+              ? `${p.full_name} ahora es administrador.`
+              : `${p.full_name} ya no es administrador.`,
+          ),
+        onError,
+      },
+    );
   };
 
   const handleActive = async (p: Profile) => {
@@ -140,7 +152,18 @@ export default function AdminUsersPage() {
     );
     if (!ok) return;
     setActionError('');
-    setActive.mutate({ userId: p.id, active: !p.is_active }, { onError });
+    setActive.mutate(
+      { userId: p.id, active: !p.is_active },
+      {
+        onSuccess: () =>
+          toast.success(
+            p.is_active
+              ? `Cuenta de ${p.full_name} desactivada.`
+              : `Cuenta de ${p.full_name} reactivada.`,
+          ),
+        onError,
+      },
+    );
   };
 
   return (

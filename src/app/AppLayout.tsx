@@ -13,6 +13,7 @@ import {
 import type { ReactNode } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import Avatar from '../components/ui/Avatar';
+import Toaster from '../components/ui/Toaster';
 import { useAuth } from '../features/auth/useAuth';
 import { useChatRealtime, useMyThreads } from '../features/chat/hooks';
 import { useActiveEvent } from '../features/event/hooks';
@@ -168,6 +169,8 @@ export default function AppLayout() {
           )}
         </div>
       </header>
+
+      <Toaster />
 
       <main className="relative flex-1 flex flex-col pb-20 lg:pb-0">
         <Outlet />

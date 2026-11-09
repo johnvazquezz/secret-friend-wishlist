@@ -1,6 +1,7 @@
 import { Gift, Lock, MessageCircleHeart, Sparkles } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 import ConfettiDecor from '../components/ui/ConfettiDecor';
+import Toaster from '../components/ui/Toaster';
 
 const highlights = [
   { icon: Lock, text: 'Nadie, ni siquiera el organizador, sabe quién te regala.' },
@@ -12,6 +13,7 @@ const highlights = [
 export default function AuthLayout() {
   return (
     <div className="min-h-screen grid lg:grid-cols-[1.1fr_1fr] bg-stone-50">
+      <Toaster />
       <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-primary-700 p-12 text-white">
         <svg
           aria-hidden="true"

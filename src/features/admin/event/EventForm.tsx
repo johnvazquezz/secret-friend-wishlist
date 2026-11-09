@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import TextAreaField from '../../../components/ui/TextAreaField';
 import TextField from '../../../components/ui/TextField';
+import { toast } from '../../../components/ui/toast';
 import { getErrorMessage } from '../../../lib/errors';
 import { toDateTimeLocal } from '../../../lib/format';
 import type { EventInput, EventRow } from '../../event/api';
@@ -31,14 +32,12 @@ function initialValues(event?: EventRow): EventFormValues {
 export default function EventForm({ event, submitLabel, disabled, onSubmit }: EventFormProps) {
   const [values, setValues] = useState<EventFormValues>(() => initialValues(event));
   const [error, setError] = useState('');
-  const [saved, setSaved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const field = (key: keyof EventFormValues) => ({
     value: values[key],
     disabled,
     onChange: (e: { target: { value: string } }) => {
-      setSaved(false);
       setValues((v) => ({ ...v, [key]: e.target.value }));
     },
   });
@@ -54,7 +53,7 @@ export default function EventForm({ event, submitLabel, disabled, onSubmit }: Ev
     setSubmitting(true);
     try {
       await onSubmit(parsed.data);
-      setSaved(true);
+      toast.success('Cambios guardados.');
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -105,7 +104,6 @@ export default function EventForm({ event, submitLabel, disabled, onSubmit }: Ev
           {error}
         </p>
       )}
-      {saved && <p className="alert-success">Cambios guardados.</p>}
       {!disabled && (
         <Button type="submit" disabled={submitting}>
           <Save aria-hidden="true" className="w-5 h-5" />

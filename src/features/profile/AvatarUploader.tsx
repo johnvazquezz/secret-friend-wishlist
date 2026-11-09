@@ -1,6 +1,7 @@
 import { Camera, Trash2 } from 'lucide-react';
 import { useRef, useState, type ChangeEvent } from 'react';
 import Avatar from '../../components/ui/Avatar';
+import { toast } from '../../components/ui/toast';
 import { getErrorMessage } from '../../lib/errors';
 import { validateImageFile } from '../../lib/image';
 import type { Profile } from './api';
@@ -30,7 +31,10 @@ export default function AvatarUploader({ profile, size = 'lg' }: AvatarUploaderP
       return;
     }
     setError('');
-    upload.mutate(file, { onError: (err) => setError(getErrorMessage(err)) });
+    upload.mutate(file, {
+      onSuccess: () => toast.success('Foto actualizada.'),
+      onError: (err) => setError(getErrorMessage(err)),
+    });
   };
 
   return (

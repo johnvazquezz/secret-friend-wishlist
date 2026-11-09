@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Button from '../../../components/ui/Button';
 import type { ConfirmTone } from '../../../components/ui/ConfirmDialog';
 import { useConfirm } from '../../../components/ui/useConfirm';
+import { toast } from '../../../components/ui/toast';
 import { celebrate, launchConfetti } from '../../../lib/confetti';
 import { getErrorMessage } from '../../../lib/errors';
 import type { EventRow, EventStatus, LifecycleAction, Participant } from '../../event/api';
@@ -95,6 +96,14 @@ function actionsFor(status: EventStatus, pendingCount: number): Action[] {
   }
 }
 
+const SUCCESS_MESSAGES: Record<LifecycleAction, string> = {
+  open_event: 'Inscripción abierta.',
+  run_draw: '¡Sorteo hecho! Revísalo antes de publicarlo.',
+  publish_draw: '¡Resultados publicados! 🎁',
+  reset_draw: 'Sorteo descartado. El evento vuelve a inscripción.',
+  finish_event: 'Evento finalizado y archivado.',
+};
+
 const icons: Partial<Record<LifecycleAction, typeof Shuffle>> = {
   run_draw: Shuffle,
   reset_draw: RotateCcw,
@@ -132,6 +141,7 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
       onSuccess: () => {
         if (action.action === 'publish_draw') celebrate();
         else if (action.action === 'run_draw') launchConfetti({ count: 90, spread: 100 });
+        toast.success(SUCCESS_MESSAGES[action.action]);
       },
       onError: (err) => setError(getErrorMessage(err)),
     });

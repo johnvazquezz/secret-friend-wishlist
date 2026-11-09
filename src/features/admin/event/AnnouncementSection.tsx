@@ -1,6 +1,7 @@
 import { Megaphone } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import Button from '../../../components/ui/Button';
+import { toast } from '../../../components/ui/toast';
 import { useConfirm } from '../../../components/ui/useConfirm';
 import TextAreaField from '../../../components/ui/TextAreaField';
 import TextField from '../../../components/ui/TextField';
@@ -13,13 +14,11 @@ export default function AnnouncementSection() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [error, setError] = useState('');
-  const [sentTo, setSentTo] = useState<number | null>(null);
 
   const [confirm, confirmDialog] = useConfirm();
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    setSentTo(null);
     if (!title.trim()) {
       setError('Escribe un título para el aviso.');
       return;
@@ -35,7 +34,10 @@ export default function AnnouncementSection() {
       { title: title.trim(), body: body.trim() },
       {
         onSuccess: (count) => {
-          setSentTo(count);
+          toast.success(
+            'Aviso enviado',
+            `Llegó a ${count} ${count === 1 ? 'persona' : 'personas'}.`,
+          );
           setTitle('');
           setBody('');
         },
@@ -69,7 +71,6 @@ export default function AnnouncementSection() {
             {error}
           </p>
         )}
-        {sentTo !== null && <p className="alert-success">Aviso enviado a {sentTo} personas.</p>}
         <Button type="submit" disabled={send.isPending}>
           <Megaphone aria-hidden="true" className="w-5 h-5" />
           {send.isPending ? 'Enviando...' : 'Enviar aviso'}
