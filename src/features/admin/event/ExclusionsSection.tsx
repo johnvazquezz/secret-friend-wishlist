@@ -48,7 +48,7 @@ export default function ExclusionsSection({
       aria-label={label}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="flex-1 min-w-40 px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none bg-white"
+      className="flex-1 min-w-40 input-base w-auto h-11 py-0"
     >
       <option value="">{label}…</option>
       {options
@@ -62,10 +62,10 @@ export default function ExclusionsSection({
   );
 
   return (
-    <section className="bg-white rounded-xl shadow-lg p-6 space-y-4">
+    <section className="card p-5 sm:p-6 space-y-4">
       <div>
-        <h2 className="text-xl font-semibold text-gray-800">Exclusiones</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="text-lg font-semibold text-stone-900">Exclusiones</h2>
+        <p className="text-sm text-stone-500">
           Personas que no pueden tocarse entre sí en ningún sentido (opcional).
         </p>
       </div>
@@ -73,7 +73,7 @@ export default function ExclusionsSection({
       {editable && (
         <div className="flex flex-wrap items-center gap-2">
           {select(a, setA, 'Persona A', b)}
-          <span className="text-gray-500">y</span>
+          <span className="text-stone-500">y</span>
           {select(b, setB, 'Persona B', a)}
           <Button onClick={submit} disabled={!a || !b || add.isPending}>
             <Ban aria-hidden="true" className="w-5 h-5" />
@@ -82,29 +82,29 @@ export default function ExclusionsSection({
         </div>
       )}
       {error && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="alert-error">
           {error}
         </p>
       )}
 
       {exclusions.length === 0 ? (
-        <p className="text-gray-600">Sin exclusiones.</p>
+        <p className="text-stone-600">Sin exclusiones.</p>
       ) : (
         <ul className="space-y-2">
           {exclusions.map((x) => (
             <li
               key={`${x.user_a}-${x.user_b}`}
-              className="flex items-center justify-between gap-3 bg-gray-50 rounded-lg px-3 py-2"
+              className="flex items-center justify-between gap-3 bg-stone-50 rounded-lg px-3 py-2"
             >
-              <span className="text-gray-800">
-                {nameOf(x.user_a)} <span className="text-gray-500">↮</span> {nameOf(x.user_b)}
+              <span className="text-stone-900">
+                {nameOf(x.user_a)} <span className="text-stone-500">↮</span> {nameOf(x.user_b)}
               </span>
               {editable && (
                 <button
                   type="button"
                   onClick={() => remove.mutate(x, { onError })}
                   aria-label={`Quitar exclusión entre ${nameOf(x.user_a)} y ${nameOf(x.user_b)}`}
-                  className="p-1 text-gray-400 hover:text-red-600"
+                  className="icon-btn hover:!text-red-600 hover:!bg-red-50"
                 >
                   <X aria-hidden="true" className="w-5 h-5" />
                 </button>

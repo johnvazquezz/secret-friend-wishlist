@@ -69,11 +69,16 @@ await ana.getByText('¡Arrancó el Navidad 2026!').waitFor();
 await ana.keyboard.press('Escape');
 await ana.waitForTimeout(3000); // Realtime activo
 
+// Confirma en el diálogo de la app (ya no se usan los diálogos nativos del navegador).
+const confirmInApp = (page, label) =>
+  page.getByRole('alertdialog').getByRole('button', { name: label }).click();
+
 const adm = await session('admin');
-adm.on('dialog', (d) => d.accept());
 await adm.goto(`${APP}/admin/evento`);
 await adm.getByRole('button', { name: 'Hacer el sorteo' }).click();
+await confirmInApp(adm, 'Sortear ahora');
 await adm.getByRole('button', { name: 'Publicar resultados' }).click();
+await confirmInApp(adm, 'Publicar');
 await adm.getByRole('button', { name: 'Finalizar evento' }).waitFor();
 
 const t0 = Date.now();
@@ -93,7 +98,8 @@ await adm
   .getByLabel('Mensaje (opcional)')
   .fill('El intercambio será en la terraza del piso 3. ¡Abrigaos!');
 await adm.getByRole('button', { name: 'Enviar aviso' }).click();
-await adm.getByText(/Aviso enviado a \d+ personas/).waitFor();
+await confirmInApp(adm, 'Enviar aviso');
+await adm.getByText(/Llegó a \d+ personas/).waitFor();
 check(true, 'el admin envía el aviso');
 
 await ana.getByRole('button', { name: 'Notificaciones (2 sin leer)' }).waitFor({ timeout: 8000 });

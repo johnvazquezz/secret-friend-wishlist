@@ -48,7 +48,6 @@ async function session(name) {
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errors.push(`${name}: ${e.message}`));
   page.on('console', (m) => m.type() === 'error' && errors.push(`${name}: ${m.text()}`));
-  page.on('dialog', (d) => d.accept());
   await page.goto(`${APP}/login`);
   await page.getByLabel('Email').fill(`${name}@local.test`);
   await page.getByLabel('Contraseña').fill(PW);
@@ -57,10 +56,15 @@ async function session(name) {
   return page;
 }
 
+// Confirma en el diálogo de la app (ya no se usan los diálogos nativos del navegador).
+const confirmInApp = (page, label) =>
+  page.getByRole('alertdialog').getByRole('button', { name: label }).click();
+
 // 1. El admin indica que el sorteo ya se hizo
 const adm = await session('admin');
 await adm.goto(`${APP}/admin/evento`);
 await adm.getByRole('button', { name: 'El sorteo ya se hizo (papelitos)' }).click();
+await confirmInApp(adm, 'Sí, usar papelitos');
 await adm.getByText(/0 de 6 participantes ya registraron/).waitFor();
 check(true, 'el admin pasa el evento a papelitos y ve 0 de 6 registrados');
 
@@ -72,6 +76,7 @@ check(!options.some((o) => o.startsWith('Ana')), 'Ana no aparece en su propia li
 await ana.screenshot({ path: path.join(out, 'papelitos-registro.png'), fullPage: true });
 await ana.getByLabel('Persona de tu papelito').selectOption({ label: 'Luis Gómez — Operaciones' });
 await ana.getByRole('button', { name: 'Registrar' }).click();
+await confirmInApp(ana, 'Sí, registrar');
 await ana.getByRole('button', { name: 'Mostrar a quién le regalo' }).click();
 await ana.getByText('Luis Gómez').first().waitFor();
 await ana.getByRole('button', { name: 'Me equivoqué de persona' }).waitFor();
@@ -84,6 +89,7 @@ await maria
   .getByLabel('Persona de tu papelito')
   .selectOption({ label: 'Luis Gómez — Operaciones' });
 await maria.getByRole('button', { name: 'Registrar' }).click();
+await confirmInApp(maria, 'Sí, registrar');
 const alert = await maria.getByRole('alert').textContent();
 check(
   /ya está registrada por otro participante/.test(alert) && !/Ana/.test(alert),

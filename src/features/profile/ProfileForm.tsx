@@ -2,6 +2,7 @@ import { Save } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import Button from '../../components/ui/Button';
 import TextField from '../../components/ui/TextField';
+import { toast } from '../../components/ui/toast';
 import { getErrorMessage } from '../../lib/errors';
 import type { Profile } from './api';
 import { useUpdateProfile } from './hooks';
@@ -16,12 +17,10 @@ export default function ProfileForm({ profile, onSaved }: ProfileFormProps) {
   const [fullName, setFullName] = useState(profile.full_name);
   const [department, setDepartment] = useState(profile.department ?? '');
   const [error, setError] = useState('');
-  const [saved, setSaved] = useState(false);
   const update = useUpdateProfile(profile.id);
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    setSaved(false);
     const parsed = profileSchema.safeParse({ full_name: fullName, department });
     if (!parsed.success) {
       setError(parsed.error.issues[0].message);
@@ -30,7 +29,7 @@ export default function ProfileForm({ profile, onSaved }: ProfileFormProps) {
     setError('');
     update.mutate(parsed.data, {
       onSuccess: () => {
-        setSaved(true);
+        toast.success('Cambios guardados.');
         onSaved?.();
       },
       onError: (err) => setError(getErrorMessage(err)),
@@ -54,11 +53,10 @@ export default function ProfileForm({ profile, onSaved }: ProfileFormProps) {
         hint="Opcional"
       />
       {error && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="alert-error">
           {error}
         </p>
       )}
-      {saved && <p className="text-green-700">Cambios guardados.</p>}
       <Button type="submit" disabled={update.isPending}>
         <Save aria-hidden="true" className="w-5 h-5" />
         {update.isPending ? 'Guardando...' : 'Guardar'}

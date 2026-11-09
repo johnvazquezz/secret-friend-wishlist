@@ -1,6 +1,19 @@
-import { CheckCircle2, Lock, NotebookPen, RotateCcw, Shuffle } from 'lucide-react';
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  Lock,
+  NotebookPen,
+  RotateCcw,
+  Shuffle,
+  UserRoundX,
+} from 'lucide-react';
 import { useState } from 'react';
 import Button from '../../../components/ui/Button';
+import type { ConfirmTone } from '../../../components/ui/ConfirmDialog';
+import { useConfirm } from '../../../components/ui/useConfirm';
+import { toast } from '../../../components/ui/toast';
+import { celebrate, launchConfetti } from '../../../lib/confetti';
 import { getErrorMessage } from '../../../lib/errors';
 import type { EventRow, EventStatus, LifecycleAction, Participant } from '../../event/api';
 import { useDrawSummary, useLifecycleAction, useReleaseRecipient } from '../../event/hooks';
@@ -16,7 +29,11 @@ const STEPS: { status: EventStatus; label: string }[] = [
 interface Action {
   action: LifecycleAction;
   label: string;
+  /** Diálogo de confirmación */
+  title: string;
   confirm: string;
+  confirmLabel: string;
+  tone?: ConfirmTone;
   variant?: 'primary' | 'secondary';
 }
 
@@ -24,6 +41,8 @@ const MANUAL_ACTION: Action = {
   action: 'start_manual_event',
   label: 'El sorteo ya se hizo (papelitos)',
   variant: 'secondary',
+  title: '¿El sorteo ya se hizo con papelitos?',
+  confirmLabel: 'Sí, usar papelitos',
   confirm:
     'Usa esto si el sorteo ya se hizo fuera de la app.\n\n' +
     'Todos los de la lista (salvo quien dijo que no participa) quedarán confirmados y cada uno registrará en la app a la persona de su papelito. ' +
@@ -37,6 +56,8 @@ function actionsFor(status: EventStatus, pendingCount: number): Action[] {
         {
           action: 'open_event',
           label: 'Abrir inscripción',
+          title: '¿Abrir la inscripción?',
+          confirmLabel: 'Abrir inscripción',
           confirm:
             'Los participantes de la lista verán el evento y podrán confirmar si participan. ¿Continuar?',
         },
@@ -47,6 +68,9 @@ function actionsFor(status: EventStatus, pendingCount: number): Action[] {
         {
           action: 'run_draw',
           label: 'Hacer el sorteo',
+          title: '¿Hacer el sorteo?',
+          confirmLabel: 'Sortear ahora',
+          tone: 'celebrate',
           confirm:
             (pendingCount > 0
               ? `${pendingCount} persona(s) aún no han respondido y quedarán FUERA del sorteo.\n\n`
@@ -60,6 +84,9 @@ function actionsFor(status: EventStatus, pendingCount: number): Action[] {
         {
           action: 'publish_draw',
           label: 'Publicar resultados',
+          title: '¿Publicar los resultados?',
+          confirmLabel: 'Publicar',
+          tone: 'celebrate',
           confirm:
             'Cada participante verá a quién le regala. Esto es DEFINITIVO: después no se puede repetir el sorteo. ¿Publicar?',
         },
@@ -67,6 +94,9 @@ function actionsFor(status: EventStatus, pendingCount: number): Action[] {
           action: 'reset_draw',
           label: 'Repetir sorteo',
           variant: 'secondary',
+          title: '¿Repetir el sorteo?',
+          confirmLabel: 'Repetir',
+          tone: 'danger',
           confirm:
             'Se descartará el sorteo actual (nadie lo ha visto) y el evento volverá a inscripción. ¿Continuar?',
         },
@@ -77,6 +107,9 @@ function actionsFor(status: EventStatus, pendingCount: number): Action[] {
           action: 'finish_event',
           label: 'Finalizar evento',
           variant: 'secondary',
+          title: '¿Finalizar el evento?',
+          confirmLabel: 'Finalizar',
+          tone: 'danger',
           confirm:
             'Usa esto después del intercambio. El evento quedará archivado y podrás crear uno nuevo. ¿Finalizar?',
         },
@@ -85,6 +118,15 @@ function actionsFor(status: EventStatus, pendingCount: number): Action[] {
       return [];
   }
 }
+
+const SUCCESS_MESSAGES: Record<LifecycleAction, string> = {
+  open_event: 'Inscripción abierta.',
+  run_draw: '¡Sorteo hecho! Revísalo antes de publicarlo.',
+  publish_draw: '¡Resultados publicados! 🎁',
+  reset_draw: 'Sorteo descartado. El evento vuelve a inscripción.',
+  finish_event: 'Evento finalizado y archivado.',
+  start_manual_event: 'Listo: cada participante ya puede registrar su papelito.',
+};
 
 const icons: Partial<Record<LifecycleAction, typeof Shuffle>> = {
   run_draw: Shuffle,
@@ -110,30 +152,69 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
   const currentIndex = STEPS.findIndex((s) => s.status === event.status);
   const isManual = event.draw_mode === 'manual';
 
-  const run = (action: Action) => {
-    if (!window.confirm(action.confirm)) return;
+  const [confirm, confirmDialog] = useConfirm();
+
+  const run = async (action: Action) => {
+    const ok = await confirm({
+      title: action.title,
+      message: action.confirm,
+      confirmLabel: action.confirmLabel,
+      tone: action.tone,
+    });
+    if (!ok) return;
     setError('');
-    lifecycle.mutate(action.action, { onError: (err) => setError(getErrorMessage(err)) });
+    lifecycle.mutate(action.action, {
+      onSuccess: () => {
+        if (action.action === 'publish_draw') celebrate();
+        else if (action.action === 'run_draw') launchConfetti({ count: 90, spread: 100 });
+        toast.success(SUCCESS_MESSAGES[action.action]);
+      },
+      onError: (err) => setError(getErrorMessage(err)),
+    });
   };
 
   return (
-    <section className="bg-white rounded-xl shadow-lg p-6 space-y-5">
-      <ol className="flex flex-wrap gap-2" aria-label="Estado del evento">
-        {STEPS.map((step, i) => (
-          <li
-            key={step.status}
-            aria-current={i === currentIndex ? 'step' : undefined}
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
-              i === currentIndex
-                ? 'bg-primary text-white'
-                : i < currentIndex
-                  ? 'bg-primary/10 text-primary-dark'
-                  : 'bg-gray-100 text-gray-500'
-            }`}
-          >
-            {i + 1}. {step.label}
-          </li>
-        ))}
+    <section className="card p-5 sm:p-6 space-y-5">
+      <ol className="grid grid-cols-5" aria-label="Estado del evento">
+        {STEPS.map((step, i) => {
+          const done = i < currentIndex;
+          const current = i === currentIndex;
+          return (
+            <li
+              key={step.status}
+              aria-current={current ? 'step' : undefined}
+              className="relative flex flex-col items-center gap-2 text-center"
+            >
+              {i > 0 && (
+                <span
+                  aria-hidden="true"
+                  className={`absolute top-4 right-1/2 w-full h-0.5 -translate-y-1/2 ${
+                    i <= currentIndex ? 'bg-primary-500' : 'bg-stone-200'
+                  }`}
+                />
+              )}
+              <span
+                className={`relative z-10 w-8 h-8 rounded-full inline-flex items-center justify-center text-sm font-semibold ring-4 ring-white ${
+                  current
+                    ? 'bg-primary-600 text-white shadow-sm shadow-primary-900/20'
+                    : done
+                      ? 'bg-primary-100 text-primary-800'
+                      : 'bg-stone-100 text-stone-500'
+                }`}
+              >
+                {done ? <Check aria-hidden="true" className="w-4 h-4" /> : i + 1}
+                {done && <span className="sr-only">{i + 1}.</span>}
+              </span>
+              <span
+                className={`text-[11px] sm:text-xs font-medium ${
+                  current ? 'text-stone-900' : 'text-stone-500'
+                }`}
+              >
+                {step.label}
+              </span>
+            </li>
+          );
+        })}
       </ol>
 
       <dl className="grid grid-cols-3 gap-3 text-center">
@@ -143,35 +224,40 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
       </dl>
 
       {showSummary && summary.data && isManual && (
-        <p
-          className={`flex items-center gap-2 font-medium ${
-            summary.data.is_valid ? 'text-green-700' : 'text-gray-700'
-          }`}
-        >
-          <CheckCircle2 aria-hidden="true" className="w-5 h-5" />
+        <p className={`flex items-start gap-2 ${summary.data.is_valid ? 'alert-success' : 'note'}`}>
+          {summary.data.is_valid ? (
+            <CheckCircle2 aria-hidden="true" className="w-4 h-4 mt-0.5 shrink-0" />
+          ) : (
+            <NotebookPen aria-hidden="true" className="w-4 h-4 mt-0.5 shrink-0 text-stone-400" />
+          )}
           Sorteo con papelitos: {summary.data.assigned} de {summary.data.confirmed} participantes ya
           registraron a su amigo secreto.
         </p>
       )}
       {showSummary && summary.data && !isManual && (
         <p
-          className={`flex items-center gap-2 font-medium ${
-            summary.data.is_valid ? 'text-green-700' : 'text-red-600'
+          className={`flex items-start gap-2 ${
+            summary.data.is_valid ? 'alert-success' : 'alert-error'
           }`}
         >
-          <CheckCircle2 aria-hidden="true" className="w-5 h-5" />
+          {summary.data.is_valid ? (
+            <CheckCircle2 aria-hidden="true" className="w-4 h-4 mt-0.5 shrink-0" />
+          ) : (
+            <AlertTriangle aria-hidden="true" className="w-4 h-4 mt-0.5 shrink-0" />
+          )}
           {summary.data.is_valid
             ? `Sorteo válido: ${summary.data.assigned} de ${summary.data.confirmed} participantes tienen a quién regalar.`
             : `Revisa el sorteo: ${summary.data.assigned} asignaciones para ${summary.data.confirmed} confirmados.`}
         </p>
       )}
       {showSummary && (
-        <p className="text-sm text-gray-500">
-          🔒 Por privacidad, nadie (tampoco los administradores) puede ver quién le regala a quién.
+        <p className="note flex items-start gap-2">
+          <Lock aria-hidden="true" className="w-4 h-4 mt-0.5 shrink-0 text-stone-400" />
+          Por privacidad, nadie (tampoco los administradores) puede ver quién le regala a quién.
         </p>
       )}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2 pt-1">
         {actionsFor(event.status, pending).map((action) => {
           const Icon = icons[action.action];
           return (
@@ -179,16 +265,16 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
               key={action.action}
               variant={action.variant}
               disabled={lifecycle.isPending}
-              onClick={() => run(action)}
+              onClick={() => void run(action)}
             >
-              {Icon && <Icon aria-hidden="true" className="w-5 h-5" />}
+              {Icon && <Icon aria-hidden="true" className="w-4 h-4" />}
               {action.label}
             </Button>
           );
         })}
       </div>
       {error && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="alert-error">
           {error}
         </p>
       )}
@@ -196,6 +282,7 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
       {isManual && event.status === 'published' && (
         <ReleaseRecipient eventId={event.id} participants={participants} />
       )}
+      {confirmDialog}
     </section>
   );
 }
@@ -210,41 +297,55 @@ function ReleaseRecipient({
 }) {
   const release = useReleaseRecipient(eventId);
   const [selected, setSelected] = useState('');
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [error, setError] = useState('');
+  const [confirm, confirmDialog] = useConfirm();
   const options = participants.filter((p) => p.status === 'confirmed');
   const name = options.find((p) => p.user_id === selected)?.profile?.full_name;
 
-  const submit = () => {
+  const submit = async () => {
     if (!selected || !name) return;
-    if (
-      !window.confirm(
-        `Se anulará el registro de quien tenga a ${name} (no sabrás quién era) y se borrará esa conversación. A esa persona le llegará un aviso para registrarse de nuevo. ¿Continuar?`,
-      )
-    )
-      return;
-    setMessage(null);
+    const ok = await confirm({
+      title: `¿Liberar a ${name}?`,
+      message: `Se anulará el registro de quien tenga a ${name} (no sabrás quién era) y se borrará esa conversación. A esa persona le llegará un aviso para registrarse de nuevo.`,
+      confirmLabel: 'Liberar',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    setError('');
     release.mutate(selected, {
       onSuccess: () => {
         setSelected('');
-        setMessage({ ok: true, text: `${name} vuelve a estar libre para registrarse.` });
+        toast.success(`${name} vuelve a estar libre para registrarse.`);
       },
-      onError: (err) => setMessage({ ok: false, text: getErrorMessage(err) }),
+      onError: (err) => setError(getErrorMessage(err)),
     });
   };
 
   return (
-    <div className="border-t border-gray-100 pt-4 space-y-2">
-      <h3 className="font-semibold text-gray-800">¿Alguien registró a la persona equivocada?</h3>
-      <p className="text-sm text-gray-600">
-        Si dos personas dicen tener el mismo papelito, libera a esa persona para que quien la tenga
-        de verdad pueda registrarla.
-      </p>
+    <div className="border-t border-stone-100 pt-5 space-y-3">
+      <div className="flex items-start gap-3">
+        <span
+          aria-hidden="true"
+          className="w-9 h-9 shrink-0 rounded-xl bg-stone-100 text-stone-500 inline-flex items-center justify-center"
+        >
+          <UserRoundX className="w-5 h-5" />
+        </span>
+        <div>
+          <h3 className="font-semibold text-stone-900">
+            ¿Alguien registró a la persona equivocada?
+          </h3>
+          <p className="text-sm text-stone-600 mt-0.5">
+            Si dos personas dicen tener el mismo papelito, libera a esa persona para que quien la
+            tenga de verdad pueda registrarla.
+          </p>
+        </div>
+      </div>
       <div className="flex flex-wrap gap-2">
         <select
           aria-label="Persona a liberar"
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
-          className="flex-1 min-w-48 px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none bg-white"
+          className="flex-1 min-w-48 input-base w-auto h-11 py-0"
         >
           <option value="">Elegir persona…</option>
           {options.map((p) => (
@@ -253,27 +354,29 @@ function ReleaseRecipient({
             </option>
           ))}
         </select>
-        <Button variant="secondary" onClick={submit} disabled={!selected || release.isPending}>
+        <Button
+          variant="secondary"
+          onClick={() => void submit()}
+          disabled={!selected || release.isPending}
+        >
           Liberar
         </Button>
       </div>
-      {message && (
-        <p
-          role={message.ok ? 'status' : 'alert'}
-          className={message.ok ? 'text-green-700' : 'text-red-600'}
-        >
-          {message.text}
+      {error && (
+        <p role="alert" className="alert-error">
+          {error}
         </p>
       )}
+      {confirmDialog}
     </div>
   );
 }
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="bg-gray-50 rounded-lg p-3">
-      <dt className="text-sm text-gray-500">{label}</dt>
-      <dd className="text-2xl font-bold text-gray-800 tabular-nums">{value}</dd>
+    <div className="rounded-xl bg-stone-50 ring-1 ring-inset ring-stone-200/70 p-3 sm:p-4">
+      <dt className="text-xs font-medium text-stone-500">{label}</dt>
+      <dd className="mt-1 font-display text-2xl font-bold text-stone-900 tabular-nums">{value}</dd>
     </div>
   );
 }

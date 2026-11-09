@@ -32,9 +32,11 @@ export default function RecipientDetails({
   const filled = PREFERENCE_LABELS.filter(([key]) => preferences.data?.[key]);
 
   return (
-    <div className="w-full text-left space-y-6 mt-6 border-t border-gray-100 pt-6">
+    <div className="w-full text-left space-y-8 mt-8 border-t border-stone-200 pt-8">
       <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-3">Lista de deseos de {firstName}</h3>
+        <h3 className="text-base font-semibold text-stone-900 mb-3">
+          Lista de deseos de {firstName}
+        </h3>
         <WishlistView
           items={wishlist.data ?? []}
           emptyMessage={`${firstName} todavía no ha añadido deseos. ¡Vuelve a mirar más adelante!`}
@@ -42,12 +44,14 @@ export default function RecipientDetails({
       </div>
       {filled.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">Sus gustos</h3>
+          <h3 className="text-base font-semibold text-stone-900 mb-3">Sus gustos</h3>
           <dl className="grid gap-3 sm:grid-cols-2">
             {filled.map(([key, label]) => (
-              <div key={key} className="bg-gray-50 rounded-lg p-3">
-                <dt className="text-sm text-gray-500">{label}</dt>
-                <dd className="text-gray-800 whitespace-pre-wrap break-words">
+              <div key={key} className="rounded-xl bg-stone-50 ring-1 ring-stone-200/70 p-4">
+                <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                  {label}
+                </dt>
+                <dd className="mt-1 text-stone-900 whitespace-pre-wrap break-words">
                   {preferences.data![key]}
                 </dd>
               </div>

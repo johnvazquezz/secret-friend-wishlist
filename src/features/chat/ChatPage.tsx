@@ -2,6 +2,7 @@ import { MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import Avatar from '../../components/ui/Avatar';
 import EmptyState from '../../components/ui/EmptyState';
+import PageHeader from '../../components/ui/PageHeader';
 import ErrorState from '../../components/ui/ErrorState';
 import Spinner from '../../components/ui/Spinner';
 import { useActiveEvent } from '../event/hooks';
@@ -28,7 +29,7 @@ export default function ChatPage() {
   }
   if (eventQuery.isError || threadsQuery.isError) {
     return (
-      <div className="container mx-auto px-4 py-10">
+      <div className="mx-auto w-full max-w-6xl px-4 py-10">
         <ErrorState
           message="No se pudieron cargar tus conversaciones."
           onRetry={() => void threadsQuery.refetch()}
@@ -39,10 +40,11 @@ export default function ChatPage() {
 
   if (!event || !isChatAvailable(event.status) || threads.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <MessageCircle aria-hidden="true" className="w-14 h-14 text-primary mx-auto mb-4" />
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">Mensajes</h1>
+      <div className="mx-auto w-full max-w-xl px-4 py-16">
+        <h1 className="sr-only">Mensajes</h1>
         <EmptyState
+          icon={<MessageCircle />}
+          title="Mensajes"
           message={
             event && isChatAvailable(event.status)
               ? 'No participas en el sorteo de este año, así que no tienes conversaciones.'
@@ -64,8 +66,10 @@ export default function ChatPage() {
         role="tab"
         aria-selected={active}
         onClick={() => setSelected(thread.my_role)}
-        className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
-          active ? 'bg-primary text-white shadow' : 'bg-white text-gray-700 hover:bg-primary/5'
+        className={`flex-1 flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+          active
+            ? 'bg-white text-stone-900 shadow-soft ring-1 ring-stone-200'
+            : 'text-stone-600 hover:text-stone-900 hover:bg-white/60'
         }`}
       >
         {isGiver ? (
@@ -77,7 +81,7 @@ export default function ChatPage() {
         ) : (
           <span
             aria-hidden="true"
-            className="w-8 h-8 rounded-full bg-white/20 inline-flex items-center justify-center text-lg"
+            className="w-8 h-8 rounded-full bg-primary-50 ring-1 ring-primary-100 inline-flex items-center justify-center text-base"
           >
             🎅
           </span>
@@ -86,13 +90,13 @@ export default function ChatPage() {
           <span className="block font-semibold truncate">
             {isGiver ? thread.partner_name : 'Tu amigo secreto'}
           </span>
-          <span className={`block text-xs ${active ? 'text-white/80' : 'text-gray-500'}`}>
+          <span className="block text-xs text-stone-500">
             {isGiver ? 'A quien le regalas' : 'Anónimo: quien te regala'}
           </span>
         </span>
         {thread.unread > 0 && (
           <span
-            className="min-w-6 h-6 px-2 rounded-full bg-amber-400 text-gray-900 text-xs font-bold inline-flex items-center justify-center"
+            className="min-w-5 h-5 px-1.5 rounded-full bg-amber-400 text-stone-900 text-[11px] font-bold inline-flex items-center justify-center"
             aria-label={`${thread.unread} sin leer`}
           >
             {thread.unread}
@@ -107,16 +111,16 @@ export default function ChatPage() {
   const ordered = [...threads].sort((a, b) => rank(a) - rank(b));
 
   return (
-    <div className="container mx-auto px-4 py-10 max-w-3xl">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Mensajes</h1>
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:py-12">
+      <PageHeader eyebrow="Chat anónimo" title="Mensajes" className="mb-6" />
       <div
         role="tablist"
         aria-label="Conversaciones"
-        className="flex flex-col sm:flex-row gap-3 mb-4"
+        className="flex flex-col sm:flex-row gap-1 p-1 mb-4 rounded-2xl bg-stone-100 ring-1 ring-inset ring-stone-200/70"
       >
         {ordered.map(tab)}
       </div>
-      <section role="tabpanel" className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
+      <section role="tabpanel" className="card p-4 sm:p-6">
         <Conversation
           key={current.thread_id}
           eventId={event.id}

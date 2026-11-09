@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
 // jsdom reemplaza AbortController/AbortSignal, pero `Request` sigue siendo el de Node (undici), que
@@ -21,6 +21,10 @@ vi.mock('../features/notifications/api', () => ({
   sendAnnouncement: vi.fn(),
   subscribeToNotifications: vi.fn(() => () => {}),
 }));
+
+// La primera página de cada archivo se carga en frío (rutas lazy); con la máquina ocupada puede
+// pasar de 1 s, el límite por defecto de findBy/waitFor.
+configure({ asyncUtilTimeout: 3000 });
 
 afterEach(() => {
   cleanup();

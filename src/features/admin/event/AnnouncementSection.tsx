@@ -1,6 +1,8 @@
 import { Megaphone } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import Button from '../../../components/ui/Button';
+import { toast } from '../../../components/ui/toast';
+import { useConfirm } from '../../../components/ui/useConfirm';
 import TextAreaField from '../../../components/ui/TextAreaField';
 import TextField from '../../../components/ui/TextField';
 import { getErrorMessage } from '../../../lib/errors';
@@ -12,23 +14,30 @@ export default function AnnouncementSection() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [error, setError] = useState('');
-  const [sentTo, setSentTo] = useState<number | null>(null);
 
-  const submit = (e: FormEvent) => {
+  const [confirm, confirmDialog] = useConfirm();
+
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    setSentTo(null);
     if (!title.trim()) {
       setError('Escribe un título para el aviso.');
       return;
     }
-    if (!window.confirm('El aviso llegará a todas las personas con cuenta activa. ¿Enviar?'))
-      return;
+    const ok = await confirm({
+      title: '¿Enviar el aviso?',
+      message: 'Llegará a la campana de notificaciones de todas las personas con cuenta activa.',
+      confirmLabel: 'Enviar aviso',
+    });
+    if (!ok) return;
     setError('');
     send.mutate(
       { title: title.trim(), body: body.trim() },
       {
         onSuccess: (count) => {
-          setSentTo(count);
+          toast.success(
+            'Aviso enviado',
+            `Llegó a ${count} ${count === 1 ? 'persona' : 'personas'}.`,
+          );
           setTitle('');
           setBody('');
         },
@@ -38,13 +47,13 @@ export default function AnnouncementSection() {
   };
 
   return (
-    <section className="bg-white rounded-xl shadow-lg p-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-1">Enviar un aviso</h2>
-      <p className="text-sm text-gray-500 mb-4">
+    <section className="card p-5 sm:p-6">
+      <h2 className="text-lg font-semibold text-stone-900 mb-1">Enviar un aviso</h2>
+      <p className="text-sm text-stone-500 mb-4">
         Aparece en la campana de notificaciones de todos. Útil para cambios de sala, horario o
         recordatorios.
       </p>
-      <form onSubmit={submit} noValidate className="space-y-4">
+      <form onSubmit={(e) => void submit(e)} noValidate className="space-y-4">
         <TextField
           label="Título"
           maxLength={120}
@@ -58,16 +67,16 @@ export default function AnnouncementSection() {
           onChange={(e) => setBody(e.target.value)}
         />
         {error && (
-          <p role="alert" className="text-red-600">
+          <p role="alert" className="alert-error">
             {error}
           </p>
         )}
-        {sentTo !== null && <p className="text-green-700">Aviso enviado a {sentTo} personas.</p>}
         <Button type="submit" disabled={send.isPending}>
           <Megaphone aria-hidden="true" className="w-5 h-5" />
           {send.isPending ? 'Enviando...' : 'Enviar aviso'}
         </Button>
       </form>
+      {confirmDialog}
     </section>
   );
 }

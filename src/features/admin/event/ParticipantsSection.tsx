@@ -56,10 +56,10 @@ export default function ParticipantsSection({
   };
 
   return (
-    <section className="bg-white rounded-xl shadow-lg p-6 space-y-4">
+    <section className="card p-5 sm:p-6 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold text-gray-800">
-          Participantes <span className="text-gray-500 font-normal">({participants.length})</span>
+        <h2 className="text-lg font-semibold text-stone-900">
+          Participantes <span className="text-stone-500 font-normal">({participants.length})</span>
         </h2>
         {canAdd && candidates.length > 0 && (
           <Button variant="secondary" onClick={addAll} disabled={add.isPending}>
@@ -75,7 +75,7 @@ export default function ParticipantsSection({
             aria-label="Persona a agregar"
             value={selected}
             onChange={(e) => setSelected(e.target.value)}
-            className="flex-1 min-w-48 px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none bg-white"
+            className="flex-1 min-w-48 input-base w-auto h-11 py-0"
           >
             <option value="">Elegir persona…</option>
             {candidates.map((p) => (
@@ -91,15 +91,15 @@ export default function ParticipantsSection({
       )}
 
       {error && (
-        <p role="alert" className="text-red-600">
+        <p role="alert" className="alert-error">
           {error}
         </p>
       )}
 
       {participants.length === 0 ? (
-        <p className="text-gray-600">Aún no hay participantes en la lista.</p>
+        <p className="text-stone-600">Aún no hay participantes en la lista.</p>
       ) : (
-        <ul className="divide-y divide-gray-100">
+        <ul className="divide-y divide-stone-100">
           {participants.map((p) => {
             const name = p.profile?.full_name ?? 'Usuario eliminado';
             return (
@@ -110,14 +110,14 @@ export default function ParticipantsSection({
                   size="sm"
                 />
                 <div className="flex-1 min-w-40">
-                  <p className="font-medium text-gray-800">
+                  <p className="font-medium text-stone-900">
                     {name}
                     {p.profile && !p.profile.is_active && (
-                      <span className="text-xs text-gray-500"> (cuenta inactiva)</span>
+                      <span className="text-xs text-stone-500"> (cuenta inactiva)</span>
                     )}
                   </p>
                   {p.profile?.department && (
-                    <p className="text-sm text-gray-500">{p.profile.department}</p>
+                    <p className="text-sm text-stone-500">{p.profile.department}</p>
                   )}
                 </div>
                 {editable ? (
@@ -131,7 +131,7 @@ export default function ParticipantsSection({
                           { onError },
                         )
                       }
-                      className="px-2 py-1 border-2 border-gray-200 rounded-lg text-sm bg-white"
+                      className="input-base w-auto h-9 py-0 px-2.5 text-sm"
                     >
                       {Object.entries(STATUS_LABELS).map(([value, label]) => (
                         <option key={value} value={value}>
@@ -144,13 +144,13 @@ export default function ParticipantsSection({
                       onClick={() => remove.mutate(p.user_id, { onError })}
                       aria-label={`Quitar a ${name}`}
                       title="Quitar de la lista"
-                      className="p-2 text-gray-400 hover:text-red-600"
+                      className="icon-btn hover:!text-red-600 hover:!bg-red-50"
                     >
                       <UserMinus aria-hidden="true" className="w-5 h-5" />
                     </button>
                   </>
                 ) : (
-                  <span className="text-sm text-gray-600">{STATUS_LABELS[p.status]}</span>
+                  <span className="text-sm text-stone-600">{STATUS_LABELS[p.status]}</span>
                 )}
               </li>
             );

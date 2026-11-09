@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { routes } from '../../../app/routes';
@@ -87,7 +87,6 @@ describe('AdminEventPage', () => {
 
   it('en inscripción: estadísticas y aviso de quién queda fuera antes de sortear', async () => {
     api.fetchActiveEvent.mockResolvedValue({ ...baseEvent, status: 'open' });
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     renderRoutes(routes, '/admin/evento', admin());
 
     expect(await screen.findByText('Participación')).toBeInTheDocument();
@@ -95,10 +94,12 @@ describe('AdminEventPage', () => {
     expect(screen.getByText('No han entrado nunca a la app')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Hacer el sorteo' }));
-    expect(confirm).toHaveBeenCalledWith(
-      expect.stringContaining('1 persona(s) aún no han respondido'),
-    );
+    const dialog = screen.getByRole('alertdialog', { name: '¿Hacer el sorteo?' });
+    expect(dialog).toHaveTextContent('1 persona(s) aún no han respondido');
+    expect(api.runLifecycleAction).not.toHaveBeenCalled();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Sortear ahora' }));
     expect(api.runLifecycleAction).toHaveBeenCalledWith('run_draw', 'e1');
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 
   it('sorteado: permite publicar o repetir, y recuerda que nadie ve las parejas', async () => {
@@ -115,21 +116,25 @@ describe('AdminEventPage', () => {
 
   it('cancelar la confirmación no ejecuta nada', async () => {
     api.fetchActiveEvent.mockResolvedValue({ ...baseEvent, status: 'drawn' });
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
     renderRoutes(routes, '/admin/evento', admin());
     await userEvent.click(await screen.findByRole('button', { name: 'Publicar resultados' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(api.runLifecycleAction).not.toHaveBeenCalled();
   });
 
   it('en inscripción permite indicar que el sorteo ya se hizo con papelitos', async () => {
     api.fetchActiveEvent.mockResolvedValue({ ...baseEvent, status: 'open' });
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     renderRoutes(routes, '/admin/evento', admin());
 
     await userEvent.click(
       await screen.findByRole('button', { name: 'El sorteo ya se hizo (papelitos)' }),
     );
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Nadie, tampoco tú'));
+    const dialog = screen.getByRole('alertdialog', {
+      name: '¿El sorteo ya se hizo con papelitos?',
+    });
+    expect(dialog).toHaveTextContent('Nadie, tampoco tú');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Sí, usar papelitos' }));
     expect(api.runLifecycleAction).toHaveBeenCalledWith('start_manual_event', 'e1');
   });
 
@@ -141,7 +146,6 @@ describe('AdminEventPage', () => {
     });
     api.fetchDrawSummary.mockResolvedValue({ confirmed: 3, assigned: 1, is_valid: false });
     api.releaseRecipient.mockResolvedValue();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     renderRoutes(routes, '/admin/evento', admin());
 
     expect(
@@ -150,6 +154,8 @@ describe('AdminEventPage', () => {
 
     await userEvent.selectOptions(screen.getByLabelText('Persona a liberar'), 'b');
     await userEvent.click(screen.getByRole('button', { name: 'Liberar' }));
+    const dialog = screen.getByRole('alertdialog', { name: '¿Liberar a Luis?' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Liberar' }));
     expect(api.releaseRecipient).toHaveBeenCalledWith('e1', 'b');
     expect(
       await screen.findByText('Luis vuelve a estar libre para registrarse.'),

@@ -1,9 +1,11 @@
-import { Gift, Search, Sparkles } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Avatar from '../../components/ui/Avatar';
+import Badge from '../../components/ui/Badge';
 import ErrorState from '../../components/ui/ErrorState';
-import Spinner from '../../components/ui/Spinner';
+import PageHeader from '../../components/ui/PageHeader';
+import { Skeleton } from '../../components/ui/Spinner';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../auth/useAuth';
 import { useAvatarUrls, useProfiles } from '../profile/hooks';
@@ -21,14 +23,21 @@ export default function WishesPage() {
 
   if (profiles.isPending || wishlists.isPending) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Spinner />
+      <div role="status" className="mx-auto w-full max-w-6xl px-4 py-12">
+        <span className="sr-only">Cargando...</span>
+        <Skeleton className="h-10 w-72 mb-3" />
+        <Skeleton className="h-5 w-96 max-w-full mb-10" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} className="h-48 rounded-2xl" />
+          ))}
+        </div>
       </div>
     );
   }
   if (profiles.isError || wishlists.isError) {
     return (
-      <div className="container mx-auto px-4 py-12">
+      <div className="mx-auto w-full max-w-6xl px-4 py-12">
         <ErrorState
           message={`No se pudieron cargar los deseos. ${getErrorMessage(profiles.error ?? wishlists.error)}`}
           onRetry={() => {
@@ -55,67 +64,77 @@ export default function WishesPage() {
         a.full_name.localeCompare(b.full_name, 'es'),
     );
   const withWishes = active.filter((p) => wishlists.data[p.id]?.length).length;
+  const progress = active.length ? Math.round((withWishes / active.length) * 100) : 0;
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <header className="text-center mb-10">
-        <div className="flex items-center justify-center gap-4 mb-4" aria-hidden="true">
-          <Sparkles className="w-10 h-10 text-primary animate-pulse" />
-          <Gift className="w-14 h-14 text-primary" />
-          <Sparkles className="w-10 h-10 text-primary animate-pulse" />
-        </div>
-        <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-4">Deseos del equipo</h1>
-        <p className="text-lg text-gray-600">
-          {withWishes} de {active.length} personas ya compartieron sus deseos.{' '}
-          <Link to="/mi-lista" className="text-primary font-semibold underline">
-            Edita la tuya
-          </Link>
-        </p>
-      </header>
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:py-12">
+      <PageHeader
+        eyebrow="Inspiración"
+        title="Deseos del equipo"
+        description={
+          <>
+            {withWishes} de {active.length} personas ya compartieron sus deseos.{' '}
+            <Link to="/mi-lista" className="link">
+              Edita la tuya
+            </Link>
+          </>
+        }
+      />
 
-      <div className="relative mb-8 max-w-md mx-auto">
-        <Search
-          aria-hidden="true"
-          className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"
-        />
-        <input
-          type="search"
-          aria-label="Buscar persona"
-          placeholder="Buscar por nombre o departamento"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none bg-white"
-        />
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+        <div className="relative w-full sm:max-w-sm">
+          <Search
+            aria-hidden="true"
+            className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2"
+          />
+          <input
+            type="search"
+            aria-label="Buscar persona"
+            placeholder="Buscar por nombre o departamento"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="input-base h-11 py-0 pl-10"
+          />
+        </div>
+        <div className="flex items-center gap-3 sm:ml-auto sm:w-64" aria-hidden="true">
+          <div className="h-1.5 flex-1 rounded-full bg-stone-200 overflow-hidden">
+            <div className="h-full rounded-full bg-primary-500" style={{ width: `${progress}%` }} />
+          </div>
+          <span className="text-sm font-medium text-stone-600 tabular-nums">{progress}%</span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {visible.map((p) => (
-          <article
-            key={p.id}
-            className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow flex flex-col"
-          >
-            <div className="bg-gradient-to-r from-primary to-primary-dark px-5 py-3 flex items-center gap-3">
-              <Avatar
-                name={p.full_name}
-                url={p.avatar_path ? urls?.[p.avatar_path] : null}
-                className="ring-2 ring-white/50"
-              />
-              <div className="min-w-0">
-                <h2 className="text-xl font-bold text-white truncate">
-                  {p.full_name}
-                  {p.id === me?.id && <span className="text-white/70 font-normal"> (tú)</span>}
-                </h2>
-                {p.department && <p className="text-white/80 text-sm">{p.department}</p>}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {visible.map((p) => {
+          const items = wishlists.data[p.id] ?? [];
+          return (
+            <article key={p.id} className="card flex flex-col transition-shadow hover:shadow-lift">
+              <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-stone-100">
+                <Avatar name={p.full_name} url={p.avatar_path ? urls?.[p.avatar_path] : null} />
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-base font-semibold text-stone-900 truncate">
+                    {p.full_name}
+                    {p.id === me?.id && <span className="text-stone-400 font-normal"> (tú)</span>}
+                  </h2>
+                  {p.department && (
+                    <p className="text-stone-500 text-sm truncate">{p.department}</p>
+                  )}
+                </div>
+                {items.length > 0 && (
+                  <Badge tone="primary">
+                    {items.length} {items.length === 1 ? 'deseo' : 'deseos'}
+                  </Badge>
+                )}
               </div>
-            </div>
-            <div className="p-5 flex-1">
-              <WishlistView items={wishlists.data[p.id] ?? []} />
-            </div>
-          </article>
-        ))}
+              <div className="p-5 flex-1">
+                <WishlistView items={items} />
+              </div>
+            </article>
+          );
+        })}
       </div>
       {visible.length === 0 && (
-        <p className="text-gray-600 text-center py-8">Nadie coincide con la búsqueda.</p>
+        <p className="text-stone-500 text-center py-12">Nadie coincide con la búsqueda.</p>
       )}
     </div>
   );

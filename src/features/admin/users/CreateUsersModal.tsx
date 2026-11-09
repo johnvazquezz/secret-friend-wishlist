@@ -34,7 +34,7 @@ export default function CreateUsersModal({ onClose, onCreated }: CreateUsersModa
     <Modal title="Agregar usuarios" onClose={onClose}>
       <div className="space-y-4">
         <div>
-          <label htmlFor={textareaId} className="block text-gray-700 font-semibold mb-2">
+          <label htmlFor={textareaId} className="block text-stone-700 font-semibold mb-2">
             Una persona por línea
           </label>
           <textarea
@@ -42,19 +42,19 @@ export default function CreateUsersModal({ onClose, onCreated }: CreateUsersModa
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder={'Ana Pérez; ana@empresa.com; Finanzas\nLuis Gómez; luis@empresa.com'}
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none h-40 font-mono text-sm"
+            className="input-base h-40 font-mono text-sm"
           />
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-stone-500 mt-1">
             Formato: <code>Nombre; email; Departamento (opcional)</code>. También puedes pegar
             columnas copiadas de Excel.
           </p>
         </div>
 
         {parsed.length > 0 && (
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-stone-700">
             {valid.length} listos para crear
             {invalid.length > 0 && (
-              <span className="text-red-600"> · {invalid.length} con errores</span>
+              <span className="alert-error"> · {invalid.length} con errores</span>
             )}
           </p>
         )}
@@ -68,7 +68,7 @@ export default function CreateUsersModal({ onClose, onCreated }: CreateUsersModa
           </ul>
         )}
         {error && (
-          <p role="alert" className="text-red-600">
+          <p role="alert" className="alert-error">
             {error}
           </p>
         )}

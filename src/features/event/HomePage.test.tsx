@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { routes } from '../../app/routes';
@@ -188,7 +188,6 @@ describe('HomePage', () => {
         person('user-3', 'Jorge Ruiz', 'declined'),
       ]);
       mocks.claim.mockResolvedValue();
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
       renderRoutes(routes, '/');
 
       const select = await screen.findByLabelText('Persona de tu papelito');
@@ -197,7 +196,9 @@ describe('HomePage', () => {
 
       await userEvent.selectOptions(select, 'user-2');
       await userEvent.click(screen.getByRole('button', { name: 'Registrar' }));
-      expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Luis Gómez'));
+      const dialog = screen.getByRole('alertdialog', { name: '¿Tu papelito dice Luis Gómez?' });
+      expect(mocks.claim).not.toHaveBeenCalled();
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Sí, registrar' }));
       expect(mocks.claim).toHaveBeenCalledWith('event-1', 'user-2');
     });
 
@@ -207,7 +208,6 @@ describe('HomePage', () => {
       mocks.assignment.mockResolvedValue(null);
       mocks.participants.mockResolvedValue([person('user-2', 'Luis Gómez')]);
       mocks.claim.mockRejectedValue({ message: 'recipient_taken', code: 'P0001' });
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
       renderRoutes(routes, '/');
 
       await userEvent.selectOptions(
@@ -215,6 +215,7 @@ describe('HomePage', () => {
         'user-2',
       );
       await userEvent.click(screen.getByRole('button', { name: 'Registrar' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Sí, registrar' }));
       expect(await screen.findByRole('alert')).toHaveTextContent(
         'Esa persona ya está registrada por otro participante',
       );
@@ -231,13 +232,13 @@ describe('HomePage', () => {
       });
       mocks.canChange.mockResolvedValue(true);
       mocks.release.mockResolvedValue();
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
       renderRoutes(routes, '/');
 
       await userEvent.click(
         await screen.findByRole('button', { name: 'Mostrar a quién le regalo' }),
       );
       await userEvent.click(await screen.findByRole('button', { name: 'Me equivoqué de persona' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Anular registro' }));
       expect(mocks.release).toHaveBeenCalledWith('event-1');
     });
 

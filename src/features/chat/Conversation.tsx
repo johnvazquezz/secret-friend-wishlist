@@ -61,7 +61,7 @@ export default function Conversation({ eventId, thread, canWrite }: Conversation
 
   return (
     <div className="flex flex-col h-[60vh] min-h-96">
-      <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2 mb-3">
+      <p className="note mb-4">
         {isGiver
           ? `🤫 ${thread.partner_name ?? 'Tu destinatario'} no sabe que eres tú. No firmes tus mensajes ni des pistas obvias.`
           : '🎁 No sabes quién es tu amigo secreto. Puedes contarle qué te gusta o resolver sus dudas.'}
@@ -76,24 +76,26 @@ export default function Conversation({ eventId, thread, canWrite }: Conversation
         {messages.isPending ? (
           <Spinner label="Cargando mensajes..." />
         ) : messages.isError ? (
-          <p className="text-red-600">No se pudieron cargar los mensajes.</p>
+          <p className="alert-error">No se pudieron cargar los mensajes.</p>
         ) : count === 0 ? (
-          <p className="text-gray-500 text-center py-10">Aún no hay mensajes. ¡Rompe el hielo!</p>
+          <p className="text-stone-500 text-sm text-center py-12">
+            Aún no hay mensajes. ¡Rompe el hielo!
+          </p>
         ) : (
           messages.data.map((m) => {
             const mine = m.author_role === thread.my_role;
             return (
               <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm ${
+                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
                     mine
-                      ? 'bg-primary text-white rounded-br-sm'
-                      : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm'
+                      ? 'bg-primary-600 text-white rounded-br-md'
+                      : 'bg-stone-100 text-stone-900 rounded-bl-md'
                   }`}
                 >
                   <p className="sr-only">{mine ? 'Tú' : partnerLabel}:</p>
                   <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                  <p className={`text-xs mt-1 ${mine ? 'text-white/70' : 'text-gray-400'}`}>
+                  <p className={`text-xs mt-1 ${mine ? 'text-white/70' : 'text-stone-400'}`}>
                     {timeFormat.format(new Date(m.created_at))}
                   </p>
                 </div>
@@ -105,7 +107,7 @@ export default function Conversation({ eventId, thread, canWrite }: Conversation
       </div>
 
       {canWrite ? (
-        <form onSubmit={submit} className="mt-3 space-y-2">
+        <form onSubmit={submit} className="mt-4 pt-4 border-t border-stone-100 space-y-1.5">
           <label htmlFor={inputId} className="sr-only">
             Escribe un mensaje a {partnerLabel}
           </label>
@@ -118,21 +120,32 @@ export default function Conversation({ eventId, thread, canWrite }: Conversation
               maxLength={MAX_MESSAGE_LENGTH}
               rows={2}
               placeholder="Escribe un mensaje… (Enter para enviar)"
-              className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none resize-none"
+              className="input-base flex-1 resize-none"
             />
-            <Button type="submit" disabled={!body.trim() || send.isPending} aria-label="Enviar">
+            <Button
+              type="submit"
+              disabled={!body.trim() || send.isPending}
+              aria-label="Enviar"
+              className="!px-0 w-12 h-12 !rounded-full shrink-0"
+            >
               <Send aria-hidden="true" className="w-5 h-5" />
             </Button>
           </div>
-          <div className="flex justify-between text-xs text-gray-400">
-            <span>{error && <span className="text-red-600">{error}</span>}</span>
+          <div className="flex justify-between gap-3 text-xs text-stone-400 px-1">
+            <span>
+              {error && (
+                <span role="alert" className="text-red-600">
+                  {error}
+                </span>
+              )}
+            </span>
             <span>
               {body.length}/{MAX_MESSAGE_LENGTH}
             </span>
           </div>
         </form>
       ) : (
-        <p className="mt-3 text-sm text-gray-500 text-center">
+        <p className="mt-4 note text-center">
           El evento terminó: la conversación es de solo lectura.
         </p>
       )}
