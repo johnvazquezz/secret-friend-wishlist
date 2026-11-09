@@ -1,4 +1,13 @@
-import { AlertTriangle, Check, CheckCircle2, Lock, RotateCcw, Shuffle } from 'lucide-react';
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  Lock,
+  NotebookPen,
+  RotateCcw,
+  Shuffle,
+  UserRoundX,
+} from 'lucide-react';
 import { useState } from 'react';
 import Button from '../../../components/ui/Button';
 import type { ConfirmTone } from '../../../components/ui/ConfirmDialog';
@@ -7,7 +16,7 @@ import { toast } from '../../../components/ui/toast';
 import { celebrate, launchConfetti } from '../../../lib/confetti';
 import { getErrorMessage } from '../../../lib/errors';
 import type { EventRow, EventStatus, LifecycleAction, Participant } from '../../event/api';
-import { useDrawSummary, useLifecycleAction } from '../../event/hooks';
+import { useDrawSummary, useLifecycleAction, useReleaseRecipient } from '../../event/hooks';
 
 const STEPS: { status: EventStatus; label: string }[] = [
   { status: 'draft', label: 'Borrador' },
@@ -28,6 +37,18 @@ interface Action {
   variant?: 'primary' | 'secondary';
 }
 
+const MANUAL_ACTION: Action = {
+  action: 'start_manual_event',
+  label: 'El sorteo ya se hizo (papelitos)',
+  variant: 'secondary',
+  title: '¿El sorteo ya se hizo con papelitos?',
+  confirmLabel: 'Sí, usar papelitos',
+  confirm:
+    'Usa esto si el sorteo ya se hizo fuera de la app.\n\n' +
+    'Todos los de la lista (salvo quien dijo que no participa) quedarán confirmados y cada uno registrará en la app a la persona de su papelito. ' +
+    'Nadie, tampoco tú, verá quién registró a quién. ¿Continuar?',
+};
+
 function actionsFor(status: EventStatus, pendingCount: number): Action[] {
   switch (status) {
     case 'draft':
@@ -40,6 +61,7 @@ function actionsFor(status: EventStatus, pendingCount: number): Action[] {
           confirm:
             'Los participantes de la lista verán el evento y podrán confirmar si participan. ¿Continuar?',
         },
+        MANUAL_ACTION,
       ];
     case 'open':
       return [
@@ -55,6 +77,7 @@ function actionsFor(status: EventStatus, pendingCount: number): Action[] {
               : '') +
             'Se sortearán solo los participantes confirmados. Después ya no se podrán añadir personas ni exclusiones. ¿Hacer el sorteo?',
         },
+        MANUAL_ACTION,
       ];
     case 'drawn':
       return [
@@ -102,12 +125,14 @@ const SUCCESS_MESSAGES: Record<LifecycleAction, string> = {
   publish_draw: '¡Resultados publicados! 🎁',
   reset_draw: 'Sorteo descartado. El evento vuelve a inscripción.',
   finish_event: 'Evento finalizado y archivado.',
+  start_manual_event: 'Listo: cada participante ya puede registrar su papelito.',
 };
 
 const icons: Partial<Record<LifecycleAction, typeof Shuffle>> = {
   run_draw: Shuffle,
   reset_draw: RotateCcw,
   publish_draw: Lock,
+  start_manual_event: NotebookPen,
 };
 
 interface LifecyclePanelProps {
@@ -125,6 +150,7 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
   const pending = participants.filter((p) => p.status === 'invited').length;
   const declined = participants.filter((p) => p.status === 'declined').length;
   const currentIndex = STEPS.findIndex((s) => s.status === event.status);
+  const isManual = event.draw_mode === 'manual';
 
   const [confirm, confirmDialog] = useConfirm();
 
@@ -197,7 +223,18 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
         <Stat label="No participan" value={declined} />
       </dl>
 
-      {showSummary && summary.data && (
+      {showSummary && summary.data && isManual && (
+        <p className={`flex items-start gap-2 ${summary.data.is_valid ? 'alert-success' : 'note'}`}>
+          {summary.data.is_valid ? (
+            <CheckCircle2 aria-hidden="true" className="w-4 h-4 mt-0.5 shrink-0" />
+          ) : (
+            <NotebookPen aria-hidden="true" className="w-4 h-4 mt-0.5 shrink-0 text-stone-400" />
+          )}
+          Sorteo con papelitos: {summary.data.assigned} de {summary.data.confirmed} participantes ya
+          registraron a su amigo secreto.
+        </p>
+      )}
+      {showSummary && summary.data && !isManual && (
         <p
           className={`flex items-start gap-2 ${
             summary.data.is_valid ? 'alert-success' : 'alert-error'
@@ -241,8 +278,97 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
           {error}
         </p>
       )}
+
+      {isManual && event.status === 'published' && (
+        <ReleaseRecipient eventId={event.id} participants={participants} />
+      )}
       {confirmDialog}
     </section>
+  );
+}
+
+/** Corrige un registro equivocado sin revelar quién lo hizo. */
+function ReleaseRecipient({
+  eventId,
+  participants,
+}: {
+  eventId: string;
+  participants: Participant[];
+}) {
+  const release = useReleaseRecipient(eventId);
+  const [selected, setSelected] = useState('');
+  const [error, setError] = useState('');
+  const [confirm, confirmDialog] = useConfirm();
+  const options = participants.filter((p) => p.status === 'confirmed');
+  const name = options.find((p) => p.user_id === selected)?.profile?.full_name;
+
+  const submit = async () => {
+    if (!selected || !name) return;
+    const ok = await confirm({
+      title: `¿Liberar a ${name}?`,
+      message: `Se anulará el registro de quien tenga a ${name} (no sabrás quién era) y se borrará esa conversación. A esa persona le llegará un aviso para registrarse de nuevo.`,
+      confirmLabel: 'Liberar',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    setError('');
+    release.mutate(selected, {
+      onSuccess: () => {
+        setSelected('');
+        toast.success(`${name} vuelve a estar libre para registrarse.`);
+      },
+      onError: (err) => setError(getErrorMessage(err)),
+    });
+  };
+
+  return (
+    <div className="border-t border-stone-100 pt-5 space-y-3">
+      <div className="flex items-start gap-3">
+        <span
+          aria-hidden="true"
+          className="w-9 h-9 shrink-0 rounded-xl bg-stone-100 text-stone-500 inline-flex items-center justify-center"
+        >
+          <UserRoundX className="w-5 h-5" />
+        </span>
+        <div>
+          <h3 className="font-semibold text-stone-900">
+            ¿Alguien registró a la persona equivocada?
+          </h3>
+          <p className="text-sm text-stone-600 mt-0.5">
+            Si dos personas dicen tener el mismo papelito, libera a esa persona para que quien la
+            tenga de verdad pueda registrarla.
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <select
+          aria-label="Persona a liberar"
+          value={selected}
+          onChange={(e) => setSelected(e.target.value)}
+          className="flex-1 min-w-48 input-base w-auto h-11 py-0"
+        >
+          <option value="">Elegir persona…</option>
+          {options.map((p) => (
+            <option key={p.user_id} value={p.user_id}>
+              {p.profile?.full_name}
+            </option>
+          ))}
+        </select>
+        <Button
+          variant="secondary"
+          onClick={() => void submit()}
+          disabled={!selected || release.isPending}
+        >
+          Liberar
+        </Button>
+      </div>
+      {error && (
+        <p role="alert" className="alert-error">
+          {error}
+        </p>
+      )}
+      {confirmDialog}
+    </div>
   );
 }
 

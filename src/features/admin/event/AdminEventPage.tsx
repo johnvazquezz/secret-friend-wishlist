@@ -135,6 +135,7 @@ function ManageEvent({ event }: { event: EventRow }) {
         participants={participants}
         profiles={profilesQuery.data}
         editable={editable}
+        canAdd={editable || (event.status === 'published' && event.draw_mode === 'manual')}
       />
 
       <ExclusionsSection event={event} participants={participants} editable={editable} />

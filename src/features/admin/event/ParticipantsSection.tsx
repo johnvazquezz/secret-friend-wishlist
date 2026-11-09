@@ -19,6 +19,8 @@ interface ParticipantsSectionProps {
   participants: Participant[];
   profiles: Profile[];
   editable: boolean;
+  /** Se pueden añadir personas (antes del sorteo o, con papelitos, en cualquier momento). */
+  canAdd?: boolean;
 }
 
 export default function ParticipantsSection({
@@ -26,6 +28,7 @@ export default function ParticipantsSection({
   participants,
   profiles,
   editable,
+  canAdd = editable,
 }: ParticipantsSectionProps) {
   const add = useAddParticipants(event.id);
   const remove = useRemoveParticipant(event.id);
@@ -58,7 +61,7 @@ export default function ParticipantsSection({
         <h2 className="text-lg font-semibold text-stone-900">
           Participantes <span className="text-stone-500 font-normal">({participants.length})</span>
         </h2>
-        {editable && candidates.length > 0 && (
+        {canAdd && candidates.length > 0 && (
           <Button variant="secondary" onClick={addAll} disabled={add.isPending}>
             <UsersRound aria-hidden="true" className="w-5 h-5" />
             Agregar a todos ({candidates.length})
@@ -66,7 +69,7 @@ export default function ParticipantsSection({
         )}
       </div>
 
-      {editable && candidates.length > 0 && (
+      {canAdd && candidates.length > 0 && (
         <div className="flex flex-wrap gap-2">
           <select
             aria-label="Persona a agregar"

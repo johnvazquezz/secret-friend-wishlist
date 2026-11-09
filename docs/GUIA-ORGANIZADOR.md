@@ -32,6 +32,28 @@ Calendario sugerido para un intercambio a mediados de diciembre.
 4. **Publicar resultados**. Es definitivo. Todos reciben una notificación y ven a quién regalan,
    su lista de deseos y sus gustos. Se abre el chat anónimo.
 
+## Si el sorteo ya se hizo fuera de la app (papelitos)
+
+Si los emparejamientos ya existen (papelitos, otra app…) y nadie tiene la lista completa:
+
+1. Crea el evento y *Agregar a todos* (quita o marca *No participa* a quien no entre).
+2. Pulsa **El sorteo ya se hizo (papelitos)** (en *Borrador* o en *Inscripción*). Todos los de la
+   lista quedan confirmados y reciben el aviso **Registra a tu amigo secreto**.
+3. Cada persona elige en la app a quien le tocó. Desde ese momento ve su lista de deseos y sus
+   gustos, y pueden chatear de forma anónima.
+4. Tú solo ves el progreso: *N de M ya registraron a su amigo secreto*. **Nadie, tampoco tú,
+   ve quién registró a quién.** Quien no se haya registrado recibe un recordatorio diario.
+5. Si te olvidaste de alguien, puedes añadirlo después: participa directamente.
+
+Si alguien elige por error a una persona que no es la suya:
+
+- **Mientras no haya mensajes**, esa persona puede corregirlo ella misma (*Me equivoqué de
+  persona*).
+- **Si dos personas dicen tener el mismo papelito**, en *¿Alguien registró a la persona
+  equivocada?* elige a la persona disputada y pulsa **Liberar**. Se anula ese registro (y su
+  conversación) sin que sepas quién lo hizo; a quien lo tenía le llega un aviso para registrarse
+  de nuevo, y quien tenga el papelito de verdad ya puede registrarla.
+
 ## Hasta el intercambio
 
 - *Enviar un aviso* para cambios de sala, horario, etc. (llega a la campana de todos).

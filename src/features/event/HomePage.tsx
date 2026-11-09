@@ -10,6 +10,7 @@ import Spinner from '../../components/ui/Spinner';
 import { getErrorMessage } from '../../lib/errors';
 import { formatDateTime, formatMoney } from '../../lib/format';
 import { useAuth } from '../auth/useAuth';
+import ClaimRecipientPanel from './ClaimRecipientPanel';
 import { useActiveEvent, useMyAssignment, useMyParticipation } from './hooks';
 import ParticipationPanel from './ParticipationPanel';
 import SecretFriendCard from './SecretFriendCard';
@@ -62,6 +63,7 @@ export default function HomePage() {
 
   const participation = participationQuery.data ?? null;
   const assignment = assignmentQuery.data ?? null;
+  const isManual = event.draw_mode === 'manual';
   const showDeadline = !!event.registration_deadline && event.status === 'open';
   const hasInfo =
     !!event.exchange_at || event.budget_amount != null || !!event.location || showDeadline;
@@ -90,7 +92,17 @@ export default function HomePage() {
       </header>
 
       {assignment ? (
-        <SecretFriendCard assignment={assignment} eventId={event.id} />
+        <SecretFriendCard
+          assignment={assignment}
+          eventId={event.id}
+          canRelease={isManual && event.status === 'published'}
+        />
+      ) : isManual && event.status === 'published' && participation === 'confirmed' ? (
+        assignmentQuery.isPending ? (
+          <Spinner />
+        ) : (
+          <ClaimRecipientPanel eventId={event.id} myId={profile!.id} />
+        )
       ) : (
         <ParticipationPanel event={event} status={participation} />
       )}

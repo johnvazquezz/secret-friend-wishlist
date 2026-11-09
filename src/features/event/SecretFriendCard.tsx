@@ -1,22 +1,51 @@
-import { Eye, EyeOff, Gift, Lock } from 'lucide-react';
+import { Eye, EyeOff, Gift, Lock, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import Avatar from '../../components/ui/Avatar';
 import Button from '../../components/ui/Button';
 import ConfettiDecor from '../../components/ui/ConfettiDecor';
+import { toast } from '../../components/ui/toast';
+import { useConfirm } from '../../components/ui/useConfirm';
 import { celebrate } from '../../lib/confetti';
+import { getErrorMessage } from '../../lib/errors';
 import { useAvatarUrls } from '../profile/hooks';
 import RecipientDetails from '../wishlist/RecipientDetails';
 import type { MyAssignment } from './api';
+import { useCanChangeMyClaim, useReleaseMyClaim } from './hooks';
 
 interface SecretFriendCardProps {
   assignment: MyAssignment;
   eventId: string;
+  /** Sorteo con papelitos: permite deshacer el registro mientras no haya mensajes. */
+  canRelease?: boolean;
 }
 
 /** Muestra a quién le regala el usuario. Oculto por defecto para evitar miradas indiscretas. */
-export default function SecretFriendCard({ assignment, eventId }: SecretFriendCardProps) {
+export default function SecretFriendCard({
+  assignment,
+  eventId,
+  canRelease = false,
+}: SecretFriendCardProps) {
   const [visible, setVisible] = useState(false);
   const { data: urls } = useAvatarUrls(visible ? [assignment.avatar_path] : []);
+  const canChange = useCanChangeMyClaim(eventId, canRelease && visible);
+  const release = useReleaseMyClaim(eventId);
+  const [error, setError] = useState('');
+  const [confirm, confirmDialog] = useConfirm();
+
+  const handleRelease = async () => {
+    const ok = await confirm({
+      title: `¿Anular el registro de ${assignment.full_name}?`,
+      message: 'Podrás elegir otra vez a la persona de tu papelito.',
+      confirmLabel: 'Anular registro',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    setError('');
+    release.mutate(undefined, {
+      onSuccess: () => toast.info('Registro anulado.', 'Elige ahora a la persona de tu papelito.'),
+      onError: (err) => setError(getErrorMessage(err)),
+    });
+  };
 
   return (
     <section className="card overflow-hidden">
@@ -65,6 +94,23 @@ export default function SecretFriendCard({ assignment, eventId }: SecretFriendCa
               receiverId={assignment.receiver_id}
               firstName={assignment.full_name.split(' ')[0]}
             />
+            {canChange.data && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void handleRelease()}
+                disabled={release.isPending}
+                className="mt-4 hover:!bg-red-50 hover:!text-red-700"
+              >
+                <Undo2 aria-hidden="true" className="w-4 h-4" />
+                Me equivoqué de persona
+              </Button>
+            )}
+            {error && (
+              <p role="alert" className="alert-error mt-2">
+                {error}
+              </p>
+            )}
           </div>
         ) : (
           <div className="py-4">
@@ -105,6 +151,7 @@ export default function SecretFriendCard({ assignment, eventId }: SecretFriendCa
           </span>
         </p>
       </div>
+      {confirmDialog}
     </section>
   );
 }

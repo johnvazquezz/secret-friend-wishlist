@@ -14,6 +14,7 @@ vi.mock('../../event/api', async (importOriginal) => ({
   fetchEventStats: vi.fn(),
   fetchDrawSummary: vi.fn(),
   runLifecycleAction: vi.fn(),
+  releaseRecipient: vi.fn(),
   createEvent: vi.fn(),
 }));
 vi.mock('../../profile/api', async (importOriginal) => ({
@@ -34,6 +35,7 @@ const baseEvent = {
   location: null,
   registration_deadline: null,
   exchange_at: null,
+  draw_mode: 'app',
   drawn_at: null,
   published_at: null,
   created_by: 'user-1',
@@ -119,5 +121,44 @@ describe('AdminEventPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(api.runLifecycleAction).not.toHaveBeenCalled();
+  });
+
+  it('en inscripción permite indicar que el sorteo ya se hizo con papelitos', async () => {
+    api.fetchActiveEvent.mockResolvedValue({ ...baseEvent, status: 'open' });
+    renderRoutes(routes, '/admin/evento', admin());
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'El sorteo ya se hizo (papelitos)' }),
+    );
+    const dialog = screen.getByRole('alertdialog', {
+      name: '¿El sorteo ya se hizo con papelitos?',
+    });
+    expect(dialog).toHaveTextContent('Nadie, tampoco tú');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Sí, usar papelitos' }));
+    expect(api.runLifecycleAction).toHaveBeenCalledWith('start_manual_event', 'e1');
+  });
+
+  it('con papelitos muestra el progreso y permite liberar a una persona', async () => {
+    api.fetchActiveEvent.mockResolvedValue({
+      ...baseEvent,
+      status: 'published',
+      draw_mode: 'manual',
+    });
+    api.fetchDrawSummary.mockResolvedValue({ confirmed: 3, assigned: 1, is_valid: false });
+    api.releaseRecipient.mockResolvedValue();
+    renderRoutes(routes, '/admin/evento', admin());
+
+    expect(
+      await screen.findByText(/1 de 3 participantes ya registraron a su amigo secreto/),
+    ).toBeInTheDocument();
+
+    await userEvent.selectOptions(screen.getByLabelText('Persona a liberar'), 'b');
+    await userEvent.click(screen.getByRole('button', { name: 'Liberar' }));
+    const dialog = screen.getByRole('alertdialog', { name: '¿Liberar a Luis?' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Liberar' }));
+    expect(api.releaseRecipient).toHaveBeenCalledWith('e1', 'b');
+    expect(
+      await screen.findByText('Luis vuelve a estar libre para registrarse.'),
+    ).toBeInTheDocument();
   });
 });
