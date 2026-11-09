@@ -2,6 +2,8 @@ import { Eye, EyeOff, Gift, Lock } from 'lucide-react';
 import { useState } from 'react';
 import Avatar from '../../components/ui/Avatar';
 import Button from '../../components/ui/Button';
+import ConfettiDecor from '../../components/ui/ConfettiDecor';
+import { celebrate } from '../../lib/confetti';
 import { useAvatarUrls } from '../profile/hooks';
 import RecipientDetails from '../wishlist/RecipientDetails';
 import type { MyAssignment } from './api';
@@ -19,6 +21,7 @@ export default function SecretFriendCard({ assignment, eventId }: SecretFriendCa
   return (
     <section className="card overflow-hidden">
       <div className="relative bg-primary-700 px-6 py-5 flex items-center gap-3 overflow-hidden">
+        <ConfettiDecor className="opacity-60" />
         <svg
           aria-hidden="true"
           className="absolute inset-0 h-full w-full text-white/[0.08]"
@@ -80,7 +83,10 @@ export default function SecretFriendCard({ assignment, eventId }: SecretFriendCa
         <Button
           variant={visible ? 'secondary' : 'primary'}
           size={visible ? 'md' : 'lg'}
-          onClick={() => setVisible((v) => !v)}
+          onClick={() => {
+            if (!visible) window.setTimeout(celebrate, 150);
+            setVisible((v) => !v);
+          }}
           className="mt-6"
         >
           {visible ? (

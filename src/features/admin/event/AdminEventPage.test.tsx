@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { routes } from '../../../app/routes';
@@ -85,7 +85,6 @@ describe('AdminEventPage', () => {
 
   it('en inscripción: estadísticas y aviso de quién queda fuera antes de sortear', async () => {
     api.fetchActiveEvent.mockResolvedValue({ ...baseEvent, status: 'open' });
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     renderRoutes(routes, '/admin/evento', admin());
 
     expect(await screen.findByText('Participación')).toBeInTheDocument();
@@ -93,10 +92,12 @@ describe('AdminEventPage', () => {
     expect(screen.getByText('No han entrado nunca a la app')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Hacer el sorteo' }));
-    expect(confirm).toHaveBeenCalledWith(
-      expect.stringContaining('1 persona(s) aún no han respondido'),
-    );
+    const dialog = screen.getByRole('alertdialog', { name: '¿Hacer el sorteo?' });
+    expect(dialog).toHaveTextContent('1 persona(s) aún no han respondido');
+    expect(api.runLifecycleAction).not.toHaveBeenCalled();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Sortear ahora' }));
     expect(api.runLifecycleAction).toHaveBeenCalledWith('run_draw', 'e1');
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 
   it('sorteado: permite publicar o repetir, y recuerda que nadie ve las parejas', async () => {
@@ -113,9 +114,10 @@ describe('AdminEventPage', () => {
 
   it('cancelar la confirmación no ejecuta nada', async () => {
     api.fetchActiveEvent.mockResolvedValue({ ...baseEvent, status: 'drawn' });
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
     renderRoutes(routes, '/admin/evento', admin());
     await userEvent.click(await screen.findByRole('button', { name: 'Publicar resultados' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(api.runLifecycleAction).not.toHaveBeenCalled();
   });
 });

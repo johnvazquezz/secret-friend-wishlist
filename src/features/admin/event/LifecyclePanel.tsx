@@ -1,6 +1,9 @@
 import { AlertTriangle, Check, CheckCircle2, Lock, RotateCcw, Shuffle } from 'lucide-react';
 import { useState } from 'react';
 import Button from '../../../components/ui/Button';
+import type { ConfirmTone } from '../../../components/ui/ConfirmDialog';
+import { useConfirm } from '../../../components/ui/useConfirm';
+import { celebrate, launchConfetti } from '../../../lib/confetti';
 import { getErrorMessage } from '../../../lib/errors';
 import type { EventRow, EventStatus, LifecycleAction, Participant } from '../../event/api';
 import { useDrawSummary, useLifecycleAction } from '../../event/hooks';
@@ -16,7 +19,11 @@ const STEPS: { status: EventStatus; label: string }[] = [
 interface Action {
   action: LifecycleAction;
   label: string;
+  /** Diálogo de confirmación */
+  title: string;
   confirm: string;
+  confirmLabel: string;
+  tone?: ConfirmTone;
   variant?: 'primary' | 'secondary';
 }
 
@@ -27,6 +34,8 @@ function actionsFor(status: EventStatus, pendingCount: number): Action[] {
         {
           action: 'open_event',
           label: 'Abrir inscripción',
+          title: '¿Abrir la inscripción?',
+          confirmLabel: 'Abrir inscripción',
           confirm:
             'Los participantes de la lista verán el evento y podrán confirmar si participan. ¿Continuar?',
         },
@@ -36,6 +45,9 @@ function actionsFor(status: EventStatus, pendingCount: number): Action[] {
         {
           action: 'run_draw',
           label: 'Hacer el sorteo',
+          title: '¿Hacer el sorteo?',
+          confirmLabel: 'Sortear ahora',
+          tone: 'celebrate',
           confirm:
             (pendingCount > 0
               ? `${pendingCount} persona(s) aún no han respondido y quedarán FUERA del sorteo.\n\n`
@@ -48,6 +60,9 @@ function actionsFor(status: EventStatus, pendingCount: number): Action[] {
         {
           action: 'publish_draw',
           label: 'Publicar resultados',
+          title: '¿Publicar los resultados?',
+          confirmLabel: 'Publicar',
+          tone: 'celebrate',
           confirm:
             'Cada participante verá a quién le regala. Esto es DEFINITIVO: después no se puede repetir el sorteo. ¿Publicar?',
         },
@@ -55,6 +70,9 @@ function actionsFor(status: EventStatus, pendingCount: number): Action[] {
           action: 'reset_draw',
           label: 'Repetir sorteo',
           variant: 'secondary',
+          title: '¿Repetir el sorteo?',
+          confirmLabel: 'Repetir',
+          tone: 'danger',
           confirm:
             'Se descartará el sorteo actual (nadie lo ha visto) y el evento volverá a inscripción. ¿Continuar?',
         },
@@ -65,6 +83,9 @@ function actionsFor(status: EventStatus, pendingCount: number): Action[] {
           action: 'finish_event',
           label: 'Finalizar evento',
           variant: 'secondary',
+          title: '¿Finalizar el evento?',
+          confirmLabel: 'Finalizar',
+          tone: 'danger',
           confirm:
             'Usa esto después del intercambio. El evento quedará archivado y podrás crear uno nuevo. ¿Finalizar?',
         },
@@ -96,10 +117,24 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
   const declined = participants.filter((p) => p.status === 'declined').length;
   const currentIndex = STEPS.findIndex((s) => s.status === event.status);
 
-  const run = (action: Action) => {
-    if (!window.confirm(action.confirm)) return;
+  const [confirm, confirmDialog] = useConfirm();
+
+  const run = async (action: Action) => {
+    const ok = await confirm({
+      title: action.title,
+      message: action.confirm,
+      confirmLabel: action.confirmLabel,
+      tone: action.tone,
+    });
+    if (!ok) return;
     setError('');
-    lifecycle.mutate(action.action, { onError: (err) => setError(getErrorMessage(err)) });
+    lifecycle.mutate(action.action, {
+      onSuccess: () => {
+        if (action.action === 'publish_draw') celebrate();
+        else if (action.action === 'run_draw') launchConfetti({ count: 90, spread: 100 });
+      },
+      onError: (err) => setError(getErrorMessage(err)),
+    });
   };
 
   return (
@@ -183,7 +218,7 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
               key={action.action}
               variant={action.variant}
               disabled={lifecycle.isPending}
-              onClick={() => run(action)}
+              onClick={() => void run(action)}
             >
               {Icon && <Icon aria-hidden="true" className="w-4 h-4" />}
               {action.label}
@@ -196,6 +231,7 @@ export default function LifecyclePanel({ event, participants }: LifecyclePanelPr
           {error}
         </p>
       )}
+      {confirmDialog}
     </section>
   );
 }

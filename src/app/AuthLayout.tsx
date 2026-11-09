@@ -1,5 +1,6 @@
 import { Gift, Lock, MessageCircleHeart, Sparkles } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
+import ConfettiDecor from '../components/ui/ConfettiDecor';
 
 const highlights = [
   { icon: Lock, text: 'Nadie, ni siquiera el organizador, sabe quién te regala.' },
@@ -24,6 +25,7 @@ export default function AuthLayout() {
           </defs>
           <rect width="100%" height="100%" fill="url(#auth-dots)" />
         </svg>
+        <ConfettiDecor className="opacity-70" />
         <div
           aria-hidden="true"
           className="absolute -right-24 -bottom-24 w-96 h-96 rounded-full bg-primary-500/40 blur-3xl"

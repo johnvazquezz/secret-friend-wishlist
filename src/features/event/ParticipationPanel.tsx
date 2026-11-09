@@ -1,6 +1,7 @@
 import { CheckCircle2, PartyPopper, UserX, XCircle } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import Button from '../../components/ui/Button';
+import { confettiFrom } from '../../lib/confetti';
 import { getErrorMessage } from '../../lib/errors';
 import type { EventRow, ParticipationStatus } from './api';
 import { useRespondParticipation } from './hooks';
@@ -18,9 +19,14 @@ export default function ParticipationPanel({ event, status }: ParticipationPanel
     !!event.registration_deadline && new Date(event.registration_deadline) < new Date();
   const canRespond = event.status === 'open' && !deadlinePassed;
 
-  const answer = (accept: boolean) => {
+  const answer = (accept: boolean, origin?: Element | null) => {
     setError('');
-    respond.mutate(accept, { onError: (err) => setError(getErrorMessage(err)) });
+    respond.mutate(accept, {
+      onSuccess: () => {
+        if (accept) confettiFrom(origin ?? null, { count: 140, spread: 90, power: 15 });
+      },
+      onError: (err) => setError(getErrorMessage(err)),
+    });
   };
 
   if (!status) {
@@ -61,7 +67,11 @@ export default function ParticipationPanel({ event, status }: ParticipationPanel
       {canRespond && (
         <div className="flex flex-wrap justify-center gap-3 mt-5">
           {status !== 'confirmed' && (
-            <Button size="lg" onClick={() => answer(true)} disabled={respond.isPending}>
+            <Button
+              size="lg"
+              onClick={(e) => answer(true, e.currentTarget)}
+              disabled={respond.isPending}
+            >
               {status === 'declined' ? 'Cambiar de opinión: participo' : '¡Participo!'}
             </Button>
           )}

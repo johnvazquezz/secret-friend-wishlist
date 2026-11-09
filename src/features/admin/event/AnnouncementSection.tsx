@@ -1,6 +1,7 @@
 import { Megaphone } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import Button from '../../../components/ui/Button';
+import { useConfirm } from '../../../components/ui/useConfirm';
 import TextAreaField from '../../../components/ui/TextAreaField';
 import TextField from '../../../components/ui/TextField';
 import { getErrorMessage } from '../../../lib/errors';
@@ -14,15 +15,21 @@ export default function AnnouncementSection() {
   const [error, setError] = useState('');
   const [sentTo, setSentTo] = useState<number | null>(null);
 
-  const submit = (e: FormEvent) => {
+  const [confirm, confirmDialog] = useConfirm();
+
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     setSentTo(null);
     if (!title.trim()) {
       setError('Escribe un título para el aviso.');
       return;
     }
-    if (!window.confirm('El aviso llegará a todas las personas con cuenta activa. ¿Enviar?'))
-      return;
+    const ok = await confirm({
+      title: '¿Enviar el aviso?',
+      message: 'Llegará a la campana de notificaciones de todas las personas con cuenta activa.',
+      confirmLabel: 'Enviar aviso',
+    });
+    if (!ok) return;
     setError('');
     send.mutate(
       { title: title.trim(), body: body.trim() },
@@ -44,7 +51,7 @@ export default function AnnouncementSection() {
         Aparece en la campana de notificaciones de todos. Útil para cambios de sala, horario o
         recordatorios.
       </p>
-      <form onSubmit={submit} noValidate className="space-y-4">
+      <form onSubmit={(e) => void submit(e)} noValidate className="space-y-4">
         <TextField
           label="Título"
           maxLength={120}
@@ -68,6 +75,7 @@ export default function AnnouncementSection() {
           {send.isPending ? 'Enviando...' : 'Enviar aviso'}
         </Button>
       </form>
+      {confirmDialog}
     </section>
   );
 }

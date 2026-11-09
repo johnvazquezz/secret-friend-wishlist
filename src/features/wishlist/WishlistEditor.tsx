@@ -1,7 +1,9 @@
 import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import Button from '../../components/ui/Button';
+import { useConfirm } from '../../components/ui/useConfirm';
 import Modal from '../../components/ui/Modal';
+import { confettiFrom } from '../../lib/confetti';
 import { getErrorMessage } from '../../lib/errors';
 import { MAX_WISHLIST_ITEMS, type WishlistItem } from './api';
 import {
@@ -21,6 +23,7 @@ export default function WishlistEditor({ items }: { items: WishlistItem[] }) {
   const [adding, setAdding] = useState(items.length === 0);
   const [editing, setEditing] = useState<WishlistItem | null>(null);
   const [error, setError] = useState('');
+  const [confirm, confirmDialog] = useConfirm();
 
   const full = items.length >= MAX_WISHLIST_ITEMS;
   const onError = (err: unknown) => setError(getErrorMessage(err));
@@ -34,8 +37,13 @@ export default function WishlistEditor({ items }: { items: WishlistItem[] }) {
     reorder.mutate(ids, { onError });
   };
 
-  const handleDelete = (item: WishlistItem) => {
-    if (!window.confirm(`¿Quitar "${item.title}" de tu lista?`)) return;
+  const handleDelete = async (item: WishlistItem) => {
+    const ok = await confirm({
+      title: `¿Quitar "${item.title}" de tu lista?`,
+      confirmLabel: 'Quitar',
+      tone: 'danger',
+    });
+    if (!ok) return;
     setError('');
     remove.mutate(item.id, { onError });
   };
@@ -81,7 +89,7 @@ export default function WishlistEditor({ items }: { items: WishlistItem[] }) {
                     <button
                       type="button"
                       className={`${iconButton} hover:!text-red-600 hover:!bg-red-50`}
-                      onClick={() => handleDelete(item)}
+                      onClick={() => void handleDelete(item)}
                       aria-label={`Quitar "${item.title}"`}
                     >
                       <Trash2 aria-hidden="true" className="w-4 h-4" />
@@ -109,10 +117,14 @@ export default function WishlistEditor({ items }: { items: WishlistItem[] }) {
           <WishlistItemForm
             submitLabel="Añadir a mi lista"
             onSubmit={(input) =>
-              create.mutateAsync({
-                input,
-                position: items.length ? Math.max(...items.map((i) => i.position)) + 1 : 0,
-              })
+              create
+                .mutateAsync({
+                  input,
+                  position: items.length ? Math.max(...items.map((i) => i.position)) + 1 : 0,
+                })
+                .then(() =>
+                  confettiFrom(document.activeElement, { count: 50, spread: 80, power: 10 }),
+                )
             }
             onCancel={items.length > 0 ? () => setAdding(false) : undefined}
           />
@@ -141,6 +153,7 @@ export default function WishlistEditor({ items }: { items: WishlistItem[] }) {
           />
         </Modal>
       )}
+      {confirmDialog}
     </div>
   );
 }

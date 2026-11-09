@@ -9,6 +9,7 @@ import {
   UserX,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useConfirm } from '../../../components/ui/useConfirm';
 import Badge from '../../../components/ui/Badge';
 import PageHeader from '../../../components/ui/PageHeader';
 import Avatar from '../../../components/ui/Avatar';
@@ -42,6 +43,7 @@ export default function AdminUsersPage() {
   const [editing, setEditing] = useState<Profile | null>(null);
   const [credentials, setCredentials] = useState<CredentialsState>(null);
   const [actionError, setActionError] = useState('');
+  const [confirm, confirmDialog] = useConfirm();
 
   if (isPending) {
     return (
@@ -87,8 +89,13 @@ export default function AdminUsersPage() {
     });
   };
 
-  const handleReset = (p: Profile) => {
-    if (!window.confirm(`¿Generar una nueva contraseña temporal para ${p.full_name}?`)) return;
+  const handleReset = async (p: Profile) => {
+    const ok = await confirm({
+      title: `¿Restablecer la contraseña de ${p.full_name}?`,
+      message: 'Se generará una contraseña temporal nueva y la actual dejará de funcionar.',
+      confirmLabel: 'Generar contraseña',
+    });
+    if (!ok) return;
     setActionError('');
     resetPassword.mutate(p.id, {
       onSuccess: (temp_password) =>
@@ -100,21 +107,38 @@ export default function AdminUsersPage() {
     });
   };
 
-  const handleRole = (p: Profile) => {
+  const handleRole = async (p: Profile) => {
     const makeAdmin = p.role !== 'admin';
-    const message = makeAdmin
-      ? `¿Dar permisos de administrador a ${p.full_name}?`
-      : `¿Quitar permisos de administrador a ${p.full_name}?`;
-    if (!window.confirm(message)) return;
+    const ok = await confirm(
+      makeAdmin
+        ? {
+            title: `¿Hacer administrador a ${p.full_name}?`,
+            message: 'Podrá gestionar el evento y las cuentas del equipo.',
+            confirmLabel: 'Hacer admin',
+          }
+        : {
+            title: `¿Quitar los permisos de administrador a ${p.full_name}?`,
+            confirmLabel: 'Quitar admin',
+            tone: 'danger',
+          },
+    );
+    if (!ok) return;
     setActionError('');
     setRole.mutate({ userId: p.id, role: makeAdmin ? 'admin' : 'participant' }, { onError });
   };
 
-  const handleActive = (p: Profile) => {
-    const message = p.is_active
-      ? `¿Desactivar la cuenta de ${p.full_name}? No podrá iniciar sesión.`
-      : `¿Reactivar la cuenta de ${p.full_name}?`;
-    if (!window.confirm(message)) return;
+  const handleActive = async (p: Profile) => {
+    const ok = await confirm(
+      p.is_active
+        ? {
+            title: `¿Desactivar la cuenta de ${p.full_name}?`,
+            message: 'No podrá iniciar sesión hasta que la reactives.',
+            confirmLabel: 'Desactivar',
+            tone: 'danger',
+          }
+        : { title: `¿Reactivar la cuenta de ${p.full_name}?`, confirmLabel: 'Reactivar' },
+    );
+    if (!ok) return;
     setActionError('');
     setActive.mutate({ userId: p.id, active: !p.is_active }, { onError });
   };
@@ -182,20 +206,20 @@ export default function AdminUsersPage() {
                   <ActionButton icon={Pencil} onClick={() => setEditing(p)}>
                     Editar
                   </ActionButton>
-                  <ActionButton icon={KeyRound} onClick={() => handleReset(p)}>
+                  <ActionButton icon={KeyRound} onClick={() => void handleReset(p)}>
                     Restablecer contraseña
                   </ActionButton>
                   {!isMe && (
                     <>
                       <ActionButton
                         icon={p.role === 'admin' ? ShieldOff : Shield}
-                        onClick={() => handleRole(p)}
+                        onClick={() => void handleRole(p)}
                       >
                         {p.role === 'admin' ? 'Quitar admin' : 'Hacer admin'}
                       </ActionButton>
                       <ActionButton
                         icon={p.is_active ? UserX : UserCheck}
-                        onClick={() => handleActive(p)}
+                        onClick={() => void handleActive(p)}
                       >
                         {p.is_active ? 'Desactivar' : 'Reactivar'}
                       </ActionButton>
@@ -232,6 +256,7 @@ export default function AdminUsersPage() {
           </div>
         </Modal>
       )}
+      {confirmDialog}
     </div>
   );
 }

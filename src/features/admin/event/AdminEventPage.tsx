@@ -1,5 +1,6 @@
 import { Trash2 } from 'lucide-react';
 import PageHeader from '../../../components/ui/PageHeader';
+import { useConfirm } from '../../../components/ui/useConfirm';
 import ErrorState from '../../../components/ui/ErrorState';
 import Spinner from '../../../components/ui/Spinner';
 import { getErrorMessage } from '../../../lib/errors';
@@ -70,6 +71,7 @@ function ManageEvent({ event }: { event: EventRow }) {
   const updateEvent = useUpdateEvent(event.id);
   const deleteEvent = useDeleteEvent(event.id);
   const editable = event.status === 'draft' || event.status === 'open';
+  const [confirm, confirmDialog] = useConfirm();
 
   if (participantsQuery.isPending || profilesQuery.isPending) {
     return (
@@ -94,9 +96,14 @@ function ManageEvent({ event }: { event: EventRow }) {
 
   const participants = participantsQuery.data;
 
-  const handleDelete = () => {
-    if (!window.confirm(`¿Eliminar el borrador "${event.name}"?`)) return;
-    deleteEvent.mutate();
+  const handleDelete = async () => {
+    const ok = await confirm({
+      title: `¿Eliminar el borrador "${event.name}"?`,
+      message: 'Se borrarán el evento, su lista de participantes y las exclusiones.',
+      confirmLabel: 'Eliminar',
+      tone: 'danger',
+    });
+    if (ok) deleteEvent.mutate();
   };
 
   return (
@@ -109,7 +116,7 @@ function ManageEvent({ event }: { event: EventRow }) {
           event.status === 'draft' && (
             <button
               type="button"
-              onClick={handleDelete}
+              onClick={() => void handleDelete()}
               className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium text-stone-600 hover:bg-red-50 hover:text-red-700 transition-colors"
             >
               <Trash2 aria-hidden="true" className="w-4 h-4" />
@@ -143,6 +150,7 @@ function ManageEvent({ event }: { event: EventRow }) {
           onSubmit={(input) => updateEvent.mutateAsync(input)}
         />
       </section>
+      {confirmDialog}
     </div>
   );
 }

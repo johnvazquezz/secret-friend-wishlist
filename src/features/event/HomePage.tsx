@@ -2,6 +2,7 @@ import { CalendarDays, Clock, MapPin, ScrollText, Sparkles, Wallet } from 'lucid
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import Card, { CardHeader } from '../../components/ui/Card';
+import ConfettiDecor from '../../components/ui/ConfettiDecor';
 import CountdownDisplay from '../../components/ui/CountdownDisplay';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
@@ -69,6 +70,7 @@ export default function HomePage() {
   return (
     <div className="mx-auto max-w-3xl w-full px-4 py-8 sm:py-12 space-y-5">
       <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white to-primary-50 ring-1 ring-primary-100 px-6 py-10 sm:px-10 sm:py-12 text-center">
+        <ConfettiDecor />
         <Sparkles
           aria-hidden="true"
           className="absolute right-6 top-6 w-6 h-6 text-amber-400 motion-safe:animate-pulse"

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { celebrate } from '../../lib/confetti';
 import { computeCountdown } from '../../lib/format';
 
 interface CountdownDisplayProps {
@@ -15,6 +16,10 @@ export default function CountdownDisplay({ target }: CountdownDisplayProps) {
   }, []);
 
   const { days, hours, minutes, isPast } = computeCountdown(new Date(target), now);
+
+  useEffect(() => {
+    if (isPast) celebrate();
+  }, [isPast]);
 
   if (isPast) {
     return (
