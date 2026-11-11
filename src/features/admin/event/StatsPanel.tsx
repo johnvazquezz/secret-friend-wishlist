@@ -34,6 +34,7 @@ export default function StatsPanel({ event }: { event: EventRow }) {
             value: `${stats.conversations_started} de ${stats.confirmed}`,
             progress: pct(stats.conversations_started, stats.confirmed),
           },
+          { label: 'Chats libres abiertos', value: String(stats.free_conversations) },
           { label: 'Mensajes enviados', value: String(stats.messages_total) },
         ]
       : []),

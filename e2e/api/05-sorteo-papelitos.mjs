@@ -100,19 +100,21 @@ const adminDirect = await admin.from('assignments').select('*');
 check(!!adminDirect.error, 'el admin tampoco');
 
 // 3. Chat con el registro manual
-const { data: luisThreads } = await p.luis.rpc('get_my_threads', { p_event_id: event.id });
-const asReceiver = luisThreads.find((t) => t.my_role === 'receiver');
-check(
-  !!asReceiver && asReceiver.partner_name === null,
-  'Luis tiene su chat con un amigo secreto anónimo',
-);
+const convs = async (who) =>
+  (await p[who].rpc('get_my_conversations', { p_event_id: event.id })).data ?? [];
+const anaThread = (await convs('ana')).find((t) => t.is_my_recipient);
+check(anaThread?.partner_name === 'Luis Gómez', 'Ana tiene su chat con Luis');
 
-const sent = await p.ana.rpc('send_message', {
-  p_event_id: event.id,
-  p_as: 'giver',
+const sent = await p.ana.rpc('send_thread_message', {
+  p_thread_id: anaThread.thread_id,
   p_body: 'Hola Luis',
 });
 check(!sent.error, 'Ana escribe a Luis');
+const asReceiver = (await convs('luis')).find((t) => t.thread_id === anaThread.thread_id);
+check(
+  !!asReceiver && asReceiver.partner_name === null && !!asReceiver.partner_alias,
+  'Luis ve el chat con un alias anónimo',
+);
 check(
   (await claim('ana', 'maria')).error?.message === 'claim_locked',
   'con mensajes Ana ya no puede cambiar',

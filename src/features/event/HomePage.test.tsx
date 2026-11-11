@@ -17,8 +17,8 @@ import {
 } from './api';
 
 vi.mock('../chat/api', () => ({
-  fetchThreads: vi.fn().mockResolvedValue([]),
-  subscribeToThreads: vi.fn(() => () => {}),
+  fetchConversations: vi.fn().mockResolvedValue([]),
+  subscribeToMyMessages: vi.fn(() => () => {}),
 }));
 
 vi.mock('../wishlist/api', () => ({

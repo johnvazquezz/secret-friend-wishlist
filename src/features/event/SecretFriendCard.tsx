@@ -1,5 +1,6 @@
-import { Eye, EyeOff, Gift, Lock, Undo2 } from 'lucide-react';
+import { Eye, EyeOff, Gift, Lock, Undo2, VenetianMask } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Avatar from '../../components/ui/Avatar';
 import Button from '../../components/ui/Button';
 import ConfettiDecor from '../../components/ui/ConfettiDecor';
@@ -89,6 +90,13 @@ export default function SecretFriendCard({
               {assignment.full_name}
             </p>
             {assignment.department && <p className="text-stone-500">{assignment.department}</p>}
+            <Link
+              to="/mensajes?chat=amigo"
+              className="mt-3 inline-flex items-center gap-2 h-10 px-4 rounded-xl text-sm font-semibold bg-primary-50 text-primary-800 ring-1 ring-inset ring-primary-200 hover:bg-primary-100 transition-colors"
+            >
+              <VenetianMask aria-hidden="true" className="w-4 h-4" />
+              Escríbele en secreto
+            </Link>
             <RecipientDetails
               eventId={eventId}
               receiverId={assignment.receiver_id}

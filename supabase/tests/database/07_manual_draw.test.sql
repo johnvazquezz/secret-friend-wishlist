@@ -131,7 +131,7 @@ select lives_ok(
   'María registra a Luis, que quedó libre'
 );
 select lives_ok(
-  $$ select public.send_message('30000000-0000-4000-8000-000000000001', 'giver', 'Hola Luis') $$,
+  $$ select public.send_thread_message((select thread_id from public.get_my_conversations('30000000-0000-4000-8000-000000000001') where is_my_recipient), 'Hola Luis') $$,
   'el chat funciona con el registro manual'
 );
 select throws_ok(

@@ -73,6 +73,7 @@ describe('AdminEventPage', () => {
       pending_password: 1,
       conversations_started: 0,
       messages_total: 0,
+      free_conversations: 0,
     });
     api.fetchDrawSummary.mockResolvedValue({ confirmed: 3, assigned: 3, is_valid: true });
     api.runLifecycleAction.mockResolvedValue();

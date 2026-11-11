@@ -256,6 +256,56 @@ export type Database = {
           },
         ];
       };
+      free_threads: {
+        Row: {
+          created_at: string;
+          event_id: string;
+          initiator_anonymous: boolean;
+          initiator_id: string;
+          recipient_id: string;
+          thread_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          event_id: string;
+          initiator_anonymous: boolean;
+          initiator_id: string;
+          recipient_id: string;
+          thread_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          event_id?: string;
+          initiator_anonymous?: boolean;
+          initiator_id?: string;
+          recipient_id?: string;
+          thread_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'free_threads_event_id_fkey';
+            columns: ['event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'free_threads_initiator_id_fkey';
+            columns: ['initiator_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'free_threads_recipient_id_fkey';
+            columns: ['recipient_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       messages: {
         Row: {
           author_role: Database['public']['Enums']['chat_role'];
@@ -282,15 +332,7 @@ export type Database = {
           read_at?: string | null;
           thread_id?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'messages_thread_id_fkey';
-            columns: ['thread_id'];
-            isOneToOne: false;
-            referencedRelation: 'assignments';
-            referencedColumns: ['thread_id'];
-          },
-        ];
+        Relationships: [];
       };
       notifications: {
         Row: {
@@ -405,6 +447,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      thread_blocks: {
+        Row: {
+          created_at: string;
+          thread_id: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          thread_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          thread_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'thread_blocks_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       user_preferences: {
         Row: {
           allergies: string | null;
@@ -497,6 +566,7 @@ export type Database = {
           confirmed: number;
           conversations_started: number;
           declined: number;
+          free_conversations: number;
           invited: number;
           messages_total: number;
           pending_password: number;
@@ -517,6 +587,7 @@ export type Database = {
         Returns: undefined;
       };
       can_change_my_claim: { Args: { p_event_id: string }; Returns: boolean };
+      chat_alias: { Args: { p_thread_id: string }; Returns: string };
       claim_recipient: { Args: { p_event_id: string; p_receiver_id: string }; Returns: undefined };
       complete_password_change: { Args: Record<PropertyKey, never>; Returns: undefined };
       draw_summary: {
@@ -538,6 +609,22 @@ export type Database = {
           receiver_id: string;
         }[];
       };
+      get_my_conversations: {
+        Args: { p_event_id: string };
+        Returns: {
+          blocked_by_me: boolean;
+          blocked_by_partner: boolean;
+          is_my_recipient: boolean;
+          last_message_at: string;
+          my_alias: string;
+          my_role: Database['public']['Enums']['chat_role'];
+          partner_alias: string;
+          partner_avatar_path: string;
+          partner_name: string;
+          thread_id: string;
+          unread: number;
+        }[];
+      };
       get_my_recipient_preferences: {
         Args: { p_event_id: string };
         Returns: {
@@ -548,17 +635,8 @@ export type Database = {
           sizes: string;
         }[];
       };
-      get_my_threads: {
-        Args: { p_event_id: string };
-        Returns: {
-          last_message_at: string;
-          my_role: Database['public']['Enums']['chat_role'];
-          partner_avatar_path: string;
-          partner_name: string;
-          thread_id: string;
-          unread: number;
-        }[];
-      };
+      insert_thread_message: { Args: { p_body: string; p_thread_id: string }; Returns: string };
+      is_active_participant: { Args: { p_event_id: string; p_user_id: string }; Returns: boolean };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       lock_event: {
         Args: { p_event_id: string; p_expected: Database['public']['Enums']['event_status'][] };
@@ -567,10 +645,6 @@ export type Database = {
       mark_notifications_read: { Args: { p_ids?: string[] }; Returns: undefined };
       mark_thread_read: { Args: { p_thread_id: string }; Returns: undefined };
       my_claim_is_locked: { Args: { p_event_id: string; p_giver: string }; Returns: boolean };
-      my_thread_id: {
-        Args: { p_as: Database['public']['Enums']['chat_role']; p_event_id: string };
-        Returns: string;
-      };
       my_thread_role: {
         Args: { p_thread_id: string };
         Returns: Database['public']['Enums']['chat_role'];
@@ -602,16 +676,22 @@ export type Database = {
       run_draw: { Args: { p_event_id: string }; Returns: number };
       send_announcement: { Args: { p_body: string; p_title: string }; Returns: number };
       send_manual_claim_reminders: { Args: Record<PropertyKey, never>; Returns: number };
-      send_message: {
-        Args: {
-          p_as: Database['public']['Enums']['chat_role'];
-          p_body: string;
-          p_event_id: string;
-        };
+      send_reminders: { Args: { p_now?: string }; Returns: number };
+      send_thread_message: { Args: { p_body: string; p_thread_id: string }; Returns: string };
+      set_thread_blocked: { Args: { p_blocked: boolean; p_thread_id: string }; Returns: undefined };
+      start_conversation: {
+        Args: { p_anonymous: boolean; p_body: string; p_event_id: string; p_recipient_id: string };
         Returns: string;
       };
-      send_reminders: { Args: { p_now?: string }; Returns: number };
       start_manual_event: { Args: { p_event_id: string }; Returns: number };
+      thread_info: {
+        Args: { p_me: string; p_thread_id: string };
+        Returns: {
+          event_id: string;
+          event_status: Database['public']['Enums']['event_status'];
+          partner_id: string;
+        }[];
+      };
       write_audit: {
         Args: { p_action: string; p_details?: Json; p_target: string };
         Returns: undefined;

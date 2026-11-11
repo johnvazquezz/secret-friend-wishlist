@@ -104,15 +104,17 @@ Usuarios de prueba del seed (contraseña `Amigo2026local`):
   de datos directamente. Limita ese acceso a la persona técnica responsable y, si es posible, que no
   sea participante.
 
-## 💬 Chat anónimo
+## 💬 Chat
 
-Con el sorteo publicado, cada persona tiene dos conversaciones en *Mensajes*:
+Con el sorteo publicado, en *Mensajes* cada participante puede escribir **a cualquier otro
+participante**, con su nombre o **en secreto**, para despistar:
 
-- **Con su amigo secreto** (anónimo): no sabe quién es; los mensajes solo indican el rol
-  ("quien regala" / "quien recibe"), nunca la persona.
-- **Con la persona a quien le regala**, que no sabe que es ella.
+- Quien recibe un chat anónimo ve un alias festivo y no sabe quién es. El chat con su amigo secreto
+  real es **indistinguible** de los de despiste, también a nivel de API.
+- Quien regala ve a su destinatario marcado como *Tu amigo secreto*, y él no sabe que es ella.
+- Se puede **silenciar** cualquier chat. Límite: 10 chats nuevos al día por persona.
 
-Nadie más, tampoco el admin, puede leer las conversaciones. Los mensajes llegan en tiempo real
+Nadie más, tampoco el admin, puede leer las conversaciones ni saber quién escribe en secreto. Los mensajes llegan en tiempo real
 (Supabase Realtime, que aplica la misma RLS) y hay un aviso de no leídos en la navegación. Límite
 anti-spam: 20 mensajes por minuto. Al finalizar el evento el chat queda en solo lectura.
 

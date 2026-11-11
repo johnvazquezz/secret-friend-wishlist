@@ -20,13 +20,17 @@ const DB_ERROR_MESSAGES: Record<string, string> = {
   registration_closed: 'El plazo para confirmar la participación ya terminó.',
   wishlist_limit: 'Llegaste al máximo de 20 deseos.',
   chat_closed: 'El chat solo está abierto mientras el sorteo está publicado.',
+  thread_blocked: 'Este chat está silenciado: no se pueden enviar mensajes.',
+  too_many_conversations: 'Ya abriste muchos chats hoy. Vuelve a intentarlo mañana.',
+  cannot_message_self: 'No puedes escribirte a ti mismo.',
   no_thread: 'No tienes acceso a esta conversación.',
   invalid_message: 'El mensaje debe tener entre 1 y 1000 caracteres.',
   rate_limited: 'Estás enviando mensajes muy rápido. Espera un momento.',
   invalid_announcement:
     'El aviso necesita un título (máx. 120) y un texto de hasta 1000 caracteres.',
   not_manual_event: 'Esto solo está disponible cuando el sorteo se hizo fuera de la app.',
-  not_participant: 'No estás en la lista de participantes. Habla con el organizador.',
+  not_participant:
+    'Solo pueden escribirse los participantes confirmados del Amigo Secreto. Habla con el organizador.',
   cannot_claim_self: 'No puedes registrarte a ti mismo como amigo secreto.',
   recipient_not_participant: 'Esa persona no participa en este Amigo Secreto.',
   recipient_taken:

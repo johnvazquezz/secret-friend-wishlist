@@ -2,18 +2,20 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import type { EventStatus } from '../event/api';
 import {
+  fetchConversations,
   fetchMessages,
-  fetchThreads,
   markThreadRead,
-  sendMessage,
-  subscribeToThreads,
-  type ChatRole,
+  sendThreadMessage,
+  setThreadBlocked,
+  startConversation,
+  subscribeToMyMessages,
   type Message,
+  type StartConversationInput,
 } from './api';
 
 export const chatKeys = {
   all: ['chat'] as const,
-  threads: (eventId: string) => [...chatKeys.all, 'threads', eventId] as const,
+  conversations: (eventId: string) => [...chatKeys.all, 'conversations', eventId] as const,
   messages: (threadId: string) => [...chatKeys.all, 'messages', threadId] as const,
 };
 
@@ -26,10 +28,10 @@ export function isChatAvailable(status: EventStatus | undefined): boolean {
   return !!status && CHAT_STATUSES.includes(status);
 }
 
-export function useMyThreads(eventId: string | undefined, status: EventStatus | undefined) {
+export function useMyConversations(eventId: string | undefined, status: EventStatus | undefined) {
   return useQuery({
-    queryKey: chatKeys.threads(eventId ?? ''),
-    queryFn: () => fetchThreads(eventId!),
+    queryKey: chatKeys.conversations(eventId ?? ''),
+    queryFn: () => fetchConversations(eventId!),
     enabled: !!eventId && isChatAvailable(status),
     refetchInterval: FALLBACK_REFETCH_MS,
   });
@@ -53,27 +55,52 @@ export function appendMessage(
   return [...list, message].sort((a, b) => a.created_at.localeCompare(b.created_at));
 }
 
-/** Suscripción en tiempo real a mis conversaciones: actualiza mensajes y contadores. */
-export function useChatRealtime(eventId: string | undefined, threadIds: string[]) {
+/**
+ * Tiempo real de todas mis conversaciones: actualiza los mensajes y la bandeja (contadores y
+ * chats nuevos que me abran).
+ */
+export function useChatRealtime(eventId: string | undefined, userId: string | undefined) {
   const queryClient = useQueryClient();
-  const key = threadIds.join(',');
 
   useEffect(() => {
-    if (!eventId || !key) return;
-    return subscribeToThreads(key.split(','), (message) => {
+    if (!eventId || !userId) return;
+    return subscribeToMyMessages(`${eventId}:${userId}`, (message) => {
       queryClient.setQueryData<Message[]>(chatKeys.messages(message.thread_id), (list) =>
         appendMessage(list, message),
       );
-      void queryClient.invalidateQueries({ queryKey: chatKeys.threads(eventId) });
+      void queryClient.invalidateQueries({ queryKey: chatKeys.conversations(eventId) });
     });
-  }, [eventId, key, queryClient]);
+  }, [eventId, userId, queryClient]);
 }
 
-export function useSendMessage(eventId: string, as: ChatRole, threadId: string) {
+export function useSendMessage(eventId: string, threadId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: string) => sendMessage(eventId, as, body),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: chatKeys.messages(threadId) }),
+    mutationFn: (body: string) => sendThreadMessage(threadId, body),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: chatKeys.messages(threadId) });
+      void queryClient.invalidateQueries({ queryKey: chatKeys.conversations(eventId) });
+    },
+  });
+}
+
+export function useStartConversation(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: StartConversationInput) => startConversation(eventId, input),
+    onSuccess: (threadId) => {
+      void queryClient.invalidateQueries({ queryKey: chatKeys.messages(threadId) });
+      void queryClient.invalidateQueries({ queryKey: chatKeys.conversations(eventId) });
+    },
+  });
+}
+
+export function useSetThreadBlocked(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ threadId, blocked }: { threadId: string; blocked: boolean }) =>
+      setThreadBlocked(threadId, blocked),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: chatKeys.conversations(eventId) }),
   });
 }
 
@@ -81,6 +108,6 @@ export function useMarkThreadRead(eventId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (threadId: string) => markThreadRead(threadId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: chatKeys.threads(eventId) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: chatKeys.conversations(eventId) }),
   });
 }

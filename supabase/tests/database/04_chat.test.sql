@@ -34,11 +34,11 @@ grant select on t_thread to authenticated;
 -- ---------------------------------------------------------------------------
 select pg_temp.login_as('00000000-0000-4000-8000-000000000003');
 select throws_ok(
-  $$ select public.send_message('20000000-0000-4000-8000-000000000001', 'giver', 'Hola') $$,
-  'P0001', 'chat_closed', 'no se puede escribir antes de publicar'
+  $$ select public.send_thread_message((select thread_id from t_thread), 'Hola') $$,
+  'P0001', 'no_thread', 'no se puede escribir antes de publicar (el hilo aún no existe para nadie)'
 );
 select is(
-  (select count(*) from public.get_my_threads('20000000-0000-4000-8000-000000000001'))::int, 0,
+  (select count(*) from public.get_my_conversations('20000000-0000-4000-8000-000000000001'))::int, 0,
   'antes de publicar no hay conversaciones'
 );
 select pg_temp.logout();
@@ -50,7 +50,7 @@ update public.events set status = 'published' where id = '20000000-0000-4000-800
 -- ---------------------------------------------------------------------------
 select pg_temp.login_as('00000000-0000-4000-8000-000000000003');
 select lives_ok(
-  $$ select public.send_message('20000000-0000-4000-8000-000000000001', 'giver', '¡Hola! ¿Qué color te gusta?') $$,
+  $$ select public.send_thread_message((select thread_id from t_thread), '¡Hola! ¿Qué color te gusta?') $$,
   'el giver escribe a su destinataria'
 );
 select throws_ok(
@@ -59,13 +59,14 @@ select throws_ok(
   '42501', null, 'nadie inserta mensajes directamente (ni suplantando el rol)'
 );
 select throws_ok(
-  $$ select public.send_message('20000000-0000-4000-8000-000000000001', 'giver', '   ') $$,
+  $$ select public.send_thread_message((select thread_id from t_thread), '   ') $$,
   'P0001', 'invalid_message', 'rechaza mensajes vacíos'
 );
 select results_eq(
-  $$ select my_role::text, partner_name from public.get_my_threads('20000000-0000-4000-8000-000000000001') order by my_role $$,
-  $$ values ('giver'::text, 'Ana Pérez'::text), ('receiver'::text, null::text) $$,
-  'el giver conoce el nombre de su destinataria; del lado receiver no hay nombre'
+  $$ select my_role::text, partner_name, is_my_recipient, my_alias is not null
+     from public.get_my_conversations('20000000-0000-4000-8000-000000000001') order by my_role $$,
+  $$ values ('giver'::text, 'Ana Pérez'::text, true, true) $$,
+  'Luis ve a su destinataria (y su propio alias); el hilo donde le regalan a él no aparece: aún no tiene mensajes'
 );
 select pg_temp.logout();
 
@@ -74,10 +75,10 @@ select pg_temp.logout();
 -- ---------------------------------------------------------------------------
 select pg_temp.login_as('00000000-0000-4000-8000-000000000002');
 select results_eq(
-  $$ select my_role::text, partner_name, partner_avatar_path, unread
-     from public.get_my_threads('20000000-0000-4000-8000-000000000001') where my_role = 'receiver' $$,
-  $$ values ('receiver'::text, null::text, null::text, 1) $$,
-  'Ana ve un mensaje sin leer de un remitente anónimo'
+  $$ select my_role::text, partner_name, partner_avatar_path, partner_alias is not null, is_my_recipient, unread
+     from public.get_my_conversations('20000000-0000-4000-8000-000000000001') where my_role = 'receiver' $$,
+  $$ values ('receiver'::text, null::text, null::text, true, false, 1) $$,
+  'Ana ve un mensaje sin leer de un alias anónimo, sin marca de "amigo secreto"'
 );
 select is(
   (select body from public.messages where thread_id = (select thread_id from t_thread)),
@@ -98,21 +99,21 @@ select throws_ok(
   'Ana no puede resolver el hilo a una persona leyendo assignments'
 );
 select lives_ok(
-  $$ select public.send_message('20000000-0000-4000-8000-000000000001', 'receiver', '¡El morado!') $$,
+  $$ select public.send_thread_message((select thread_id from t_thread), '¡El morado!') $$,
   'Ana responde a su amigo secreto'
 );
 select lives_ok(
   $$ select public.mark_thread_read((select thread_id from t_thread)) $$, 'Ana marca como leído'
 );
 select is(
-  (select unread from public.get_my_threads('20000000-0000-4000-8000-000000000001') where my_role = 'receiver'),
+  (select unread from public.get_my_conversations('20000000-0000-4000-8000-000000000001') where my_role = 'receiver'),
   0, 'ya no tiene mensajes sin leer'
 );
 select pg_temp.logout();
 
 select pg_temp.login_as('00000000-0000-4000-8000-000000000003');
 select is(
-  (select unread from public.get_my_threads('20000000-0000-4000-8000-000000000001') where my_role = 'giver'),
+  (select unread from public.get_my_conversations('20000000-0000-4000-8000-000000000001') where my_role = 'giver'),
   1, 'Luis tiene la respuesta de Ana sin leer'
 );
 select pg_temp.logout();
@@ -133,8 +134,8 @@ select pg_temp.logout();
 
 select pg_temp.login_as('00000000-0000-4000-8000-000000000005');
 select throws_ok(
-  $$ select public.send_message('20000000-0000-4000-8000-000000000001', 'giver', 'Hola') $$,
-  'P0001', 'no_thread', 'quien no participa no tiene conversación'
+  $$ select public.send_thread_message((select thread_id from t_thread), 'Hola') $$,
+  'P0001', 'no_thread', 'quien no está en el hilo no puede escribir en él'
 );
 select pg_temp.logout();
 
@@ -151,12 +152,12 @@ reset role;
 -- ---------------------------------------------------------------------------
 select pg_temp.login_as('00000000-0000-4000-8000-000000000003');
 select lives_ok(
-  $$ select public.send_message('20000000-0000-4000-8000-000000000001', 'giver', 'msg ' || g)
+  $$ select public.send_thread_message((select thread_id from t_thread), 'msg ' || g)
      from generate_series(1, 19) g $$,
   'hasta 20 mensajes por minuto'
 );
 select throws_ok(
-  $$ select public.send_message('20000000-0000-4000-8000-000000000001', 'giver', 'uno más') $$,
+  $$ select public.send_thread_message((select thread_id from t_thread), 'uno más') $$,
   'P0001', 'rate_limited', 'el mensaje 21 en un minuto se rechaza'
 );
 select pg_temp.logout();

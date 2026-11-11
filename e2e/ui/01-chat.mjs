@@ -84,8 +84,8 @@ const receiver = await session(receiverName, 390, 844); // el receptor, en móvi
 const giver = await session(giverName);
 await receiver.waitForTimeout(4000); // dar tiempo a que Realtime quede activo
 
-await giver.goto(`${APP}/mensajes`);
-await giver.getByRole('tab', { name: /A quien le regalas/ }).click();
+// El enlace "Escríbele en secreto" de la tarjeta abre directamente el chat con su destinatario.
+await giver.goto(`${APP}/mensajes?chat=amigo`);
 const input = giver.getByLabel(/Escribe un mensaje a/);
 await input.fill('¡Hola! Soy tu amigo secreto 🎅 ¿Prefieres libros o juegos?');
 const sentAt = Date.now();
@@ -97,12 +97,18 @@ check(true, `el badge "1 sin leer" aparece sin recargar (${Date.now() - sentAt} 
 await receiver.screenshot({ path: path.join(out, '12-movil-badge.png') });
 
 await receiver.getByRole('link', { name: /Mensajes/ }).click();
-await receiver.getByText('¿Prefieres libros o juegos?').waitFor();
-const tabText = await receiver.getByRole('tab', { selected: true }).textContent();
+// En móvil se ve primero la bandeja; el chat nuevo sale como un anónimo más
+const item = receiver
+  .getByRole('navigation', { name: 'Conversaciones' })
+  .getByRole('button')
+  .first();
+const itemText = await item.textContent();
 check(
-  tabText.includes('Tu amigo secreto') && !tabText.includes(giverName),
-  'el receptor ve "Tu amigo secreto", sin nombre',
+  itemText.includes('Anónimo') && !itemText.toLowerCase().includes('amigo secreto'),
+  'el receptor ve un alias anónimo, sin la etiqueta "amigo secreto"',
 );
+await item.click();
+await receiver.getByText('¿Prefieres libros o juegos?').waitFor();
 const bodyText = await receiver.locator('body').innerText();
 const giverFull = (
   await admin.from('profiles').select('full_name').eq('id', idOf[giverName]).single()

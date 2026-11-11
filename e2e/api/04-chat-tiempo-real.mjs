@@ -1,4 +1,4 @@
-// Prueba E2E de la Fase 5 (chat + Realtime) contra Supabase local.
+// Prueba E2E del chat (sorteo + chat libre) y Realtime contra Supabase local.
 // Ejecutar con: npm run test:e2e  (ver e2e/README.md)
 import { createRequire } from 'node:module';
 
@@ -26,6 +26,7 @@ async function login(name) {
 const c = Object.fromEntries(await Promise.all(NAMES.map(async (n) => [n, await login(n)])));
 const { data: profiles } = await c.admin.from('profiles').select('id, email, full_name');
 const nameOf = Object.fromEntries(profiles.map((p) => [p.id, p.email.split('@')[0]]));
+const idOf = Object.fromEntries(profiles.map((p) => [p.email.split('@')[0], p.id]));
 
 // Sorteo publicado con todos
 const { data: event } = await c.admin
@@ -46,49 +47,47 @@ for (const p of profiles) {
 }
 await c.admin.rpc('run_draw', { p_event_id: event.id });
 
-const closed = await c.ana.rpc('send_message', {
+const closed = await c.ana.rpc('start_conversation', {
   p_event_id: event.id,
-  p_as: 'giver',
+  p_recipient_id: idOf.luis,
+  p_anonymous: true,
   p_body: 'hola',
 });
 check(closed.error?.message === 'chat_closed', 'chat cerrado antes de publicar');
 await c.admin.rpc('publish_draw', { p_event_id: event.id });
 
 // Elegimos un giver (no admin) cuyo destinatario tampoco sea el admin.
-let giverName, anaAssign;
+let giverName, assignment;
 for (const n of NAMES.filter((x) => x !== 'admin')) {
   const { data } = await c[n].rpc('get_my_assignment', { p_event_id: event.id });
   if (nameOf[data[0].receiver_id] !== 'admin') {
     giverName = n;
-    anaAssign = data;
+    assignment = data[0];
     break;
   }
 }
 const giver = c[giverName];
-const { data: anaThreads } = await giver.rpc('get_my_threads', { p_event_id: event.id });
-const anaGiverThread = anaThreads.find((t) => t.my_role === 'giver');
-const receiverName = nameOf[anaAssign[0].receiver_id];
+const receiverName = nameOf[assignment.receiver_id];
 const receiver = c[receiverName];
-const outsider = c[NAMES.find((n) => n !== giverName && n !== receiverName && n !== 'admin')];
+const outsiderName = NAMES.find((n) => n !== giverName && n !== receiverName && n !== 'admin');
+const outsider = c[outsiderName];
+const conversations = async (client) =>
+  (await client.rpc('get_my_conversations', { p_event_id: event.id })).data ?? [];
+
+const giverThread = (await conversations(giver)).find((t) => t.is_my_recipient);
 check(
-  anaGiverThread && anaGiverThread.partner_name === anaAssign[0].full_name,
-  `${giverName} ve su hilo con ${receiverName}`,
+  giverThread && giverThread.partner_name === assignment.full_name && !!giverThread.my_alias,
+  `${giverName} ve su hilo con ${receiverName} y el alias con el que escribe`,
+);
+check(
+  !(await conversations(receiver)).some((t) => t.thread_id === giverThread.thread_id),
+  `${receiverName} no ve el hilo de quien le regala hasta que llega un mensaje`,
 );
 
-const { data: recThreads } = await receiver.rpc('get_my_threads', { p_event_id: event.id });
-const recThread = recThreads.find((t) => t.my_role === 'receiver');
-check(
-  recThread.thread_id === anaGiverThread.thread_id,
-  `${receiverName} tiene el mismo hilo (como receiver)`,
-);
-check(
-  recThread.partner_name === null && recThread.partner_avatar_path === null,
-  `${receiverName} no recibe nombre ni foto del giver`,
-);
-
-// Suscripciones Realtime: receptor, tercero y admin escuchan el MISMO hilo
+// Realtime: el receptor escucha TODOS sus mensajes (sin filtrar por hilo, como la app);
+// el tercero y el admin intentan escuchar el hilo concreto.
 const received = { receiver: [], outsider: [], admin: [] };
-function listen(client, bucket) {
+function listen(client, bucket, filter) {
   return new Promise((resolve, reject) => {
     // Sin límite, una suscripción que nunca confirma dejaría la prueba (y el CI) colgada.
     const timer = setTimeout(
@@ -99,12 +98,7 @@ function listen(client, bucket) {
       .channel(`t-${bucket}`)
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `thread_id=eq.${anaGiverThread.thread_id}`,
-        },
+        { event: 'INSERT', schema: 'public', table: 'messages', ...(filter ? { filter } : {}) },
         (p) => received[bucket].push(p.new),
       )
       .on('system', {}, (p) => {
@@ -118,17 +112,17 @@ function listen(client, bucket) {
 }
 // Igual que la app: esperar el token antes de suscribirse
 for (const client of [receiver, outsider, c.admin]) await client.realtime.setAuth();
+const threadFilter = `thread_id=eq.${giverThread.thread_id}`;
 await Promise.all([
   listen(receiver, 'receiver'),
-  listen(outsider, 'outsider'),
-  listen(c.admin, 'admin'),
+  listen(outsider, 'outsider', threadFilter),
+  listen(c.admin, 'admin', threadFilter),
 ]);
 await sleep(1000);
 
 const t0 = Date.now();
-const sent = await giver.rpc('send_message', {
-  p_event_id: event.id,
-  p_as: 'giver',
+const sent = await giver.rpc('send_thread_message', {
+  p_thread_id: giverThread.thread_id,
   p_body: '¡Hola! ¿Qué te gusta?',
 });
 check(!sent.error, `${giverName} envía un mensaje anónimo`);
@@ -141,37 +135,72 @@ check(
   Object.keys(payload).sort().join() === 'author_role,body,created_at,id,read_at,thread_id',
   `el payload solo trae: ${Object.keys(payload).sort().join(', ')}`,
 );
-check(
-  !JSON.stringify(payload).includes(profiles.find((p) => nameOf[p.id] === giverName).id),
-  'el payload no contiene el id del giver',
-);
+check(!JSON.stringify(payload).includes(idOf[giverName]), 'el payload no contiene el id del giver');
 await sleep(1000);
 check(received.outsider.length === 0, 'un tercero suscrito al hilo NO recibe nada');
 check(received.admin.length === 0, 'el ADMIN suscrito al hilo NO recibe nada');
 
-// Respuesta y no leídos
-const reply = await receiver.rpc('send_message', {
+// Chat libre: un tercero escribe EN SECRETO al mismo receptor para despistar
+const free = await outsider.rpc('start_conversation', {
   p_event_id: event.id,
-  p_as: 'receiver',
+  p_recipient_id: assignment.receiver_id,
+  p_anonymous: true,
+  p_body: 'Te dejé un detallito 🎁',
+});
+check(!free.error, `${outsiderName} abre un chat anónimo con ${receiverName}`);
+for (let i = 0; i < 50 && received.receiver.length < 2; i++) await sleep(100);
+check(
+  received.receiver.length === 2,
+  `${receiverName} recibe en tiempo real el mensaje del chat nuevo, sin volver a suscribirse`,
+);
+check(
+  !JSON.stringify(received.receiver[1] ?? {}).includes(idOf[outsiderName]),
+  'el payload del chat libre tampoco identifica a quien escribe',
+);
+
+const recConvs = await conversations(receiver);
+const anon = recConvs.filter((t) => [giverThread.thread_id, free.data].includes(t.thread_id));
+const shape = (t) =>
+  JSON.stringify([
+    t.my_role,
+    t.partner_name,
+    t.partner_avatar_path,
+    t.my_alias,
+    t.is_my_recipient,
+    t.partner_alias === null,
+  ]);
+check(anon.length === 2, `${receiverName} ve dos chats anónimos`);
+check(
+  anon.length === 2 && shape(anon[0]) === shape(anon[1]),
+  'el de su amigo secreto real y el de despiste son indistinguibles',
+);
+check(
+  !JSON.stringify(recConvs).includes(idOf[giverName]) &&
+    !JSON.stringify(recConvs).includes(idOf[outsiderName]),
+  'la bandeja del receptor no contiene ningún id de quien le escribe',
+);
+
+// Respuesta y no leídos
+const reply = await receiver.rpc('send_thread_message', {
+  p_thread_id: giverThread.thread_id,
   p_body: '¡Los libros!',
 });
 check(!reply.error, `${receiverName} responde`);
-const { data: anaAfter } = await giver.rpc('get_my_threads', { p_event_id: event.id });
-check(anaAfter.find((t) => t.my_role === 'giver').unread === 1, 'el giver tiene 1 sin leer');
-await giver.rpc('mark_thread_read', { p_thread_id: anaGiverThread.thread_id });
-const { data: anaRead } = await giver.rpc('get_my_threads', { p_event_id: event.id });
-check(anaRead.find((t) => t.my_role === 'giver').unread === 0, 'tras abrirlo, 0 sin leer');
+const unreadOf = async () =>
+  (await conversations(giver)).find((t) => t.thread_id === giverThread.thread_id).unread;
+check((await unreadOf()) === 1, 'el giver tiene 1 sin leer');
+await giver.rpc('mark_thread_read', { p_thread_id: giverThread.thread_id });
+check((await unreadOf()) === 0, 'tras abrirlo, 0 sin leer');
 
 const { data: spy } = await outsider.from('messages').select('*');
 check(
-  (spy ?? []).every((m) => m.thread_id !== anaGiverThread.thread_id),
-  'el tercero no lee el hilo por REST',
+  (spy ?? []).every((m) => m.thread_id !== giverThread.thread_id),
+  'el tercero no lee el hilo del sorteo por REST',
 );
-const { data: adminSpy } = await c.admin
-  .from('messages')
-  .select('*')
-  .eq('thread_id', anaGiverThread.thread_id);
-check((adminSpy ?? []).length === 0, 'el admin no lee el hilo por REST');
+const { data: adminSpy } = await c.admin.from('messages').select('*');
+check((adminSpy ?? []).length === 0, 'el admin no lee ningún mensaje por REST');
+const freeSpy = await c.admin.from('free_threads').select('*');
+check(!!freeSpy.error, 'el admin no puede leer quién abrió los chats libres');
 
 await Promise.all(Object.values(c).map((cl) => cl.removeAllChannels()));
 console.log(failures ? `\n${failures} FALLOS` : '\nTODO OK');

@@ -59,6 +59,11 @@ async function session(name) {
 }
 
 const ana = await session('ana');
+// La campana aparece antes de que carguen las notificaciones: esperar a que llegue el contador.
+await ana
+  .getByRole('button', { name: 'Notificaciones (1 sin leer)' })
+  .waitFor({ timeout: 8000 })
+  .catch(() => {});
 const before = await ana.getByRole('button', { name: /Notificaciones/ }).getAttribute('aria-label');
 check(
   before === 'Notificaciones (1 sin leer)',

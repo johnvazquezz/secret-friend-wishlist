@@ -15,8 +15,8 @@ import { Link, NavLink, Outlet } from 'react-router-dom';
 import Avatar from '../components/ui/Avatar';
 import Toaster from '../components/ui/Toaster';
 import { useAuth } from '../features/auth/useAuth';
-import { useChatRealtime, useMyThreads } from '../features/chat/hooks';
-import { useActiveEvent } from '../features/event/hooks';
+import { isChatAvailable, useChatRealtime, useMyConversations } from '../features/chat/hooks';
+import { useActiveEvent, useMyParticipation } from '../features/event/hooks';
 import NotificationBell from '../features/notifications/NotificationBell';
 import { useAvatarUrls } from '../features/profile/hooks';
 
@@ -73,12 +73,15 @@ export default function AppLayout() {
   const { profile, isAdmin, signOut } = useAuth();
   const { data: urls } = useAvatarUrls([profile?.avatar_path]);
   const event = useActiveEvent().data;
-  const threads = useMyThreads(event?.id, event?.status).data ?? [];
-  useChatRealtime(
-    event?.id,
-    threads.map((t) => t.thread_id),
-  );
-  const unread = threads.reduce((sum, t) => sum + t.unread, 0);
+  const conversations = useMyConversations(event?.id, event?.status).data ?? [];
+  const participation = useMyParticipation(
+    isChatAvailable(event?.status) ? event?.id : undefined,
+    profile?.id,
+  ).data;
+  const showChat =
+    isChatAvailable(event?.status) && (participation === 'confirmed' || conversations.length > 0);
+  useChatRealtime(showChat ? event?.id : undefined, profile?.id);
+  const unread = conversations.reduce((sum, c) => sum + c.unread, 0);
 
   return (
     <div className="relative min-h-screen flex flex-col bg-stone-50">
@@ -114,7 +117,7 @@ export default function AppLayout() {
             <MainLink to="/deseos" icon={Gift}>
               Deseos
             </MainLink>
-            {threads.length > 0 && (
+            {showChat && (
               <MainLink to="/mensajes" icon={MessageCircle}>
                 Mensajes
                 {unread > 0 && (

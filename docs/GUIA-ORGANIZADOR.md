@@ -30,7 +30,19 @@ Calendario sugerido para un intercambio a mediados de diciembre.
 3. Si necesitas corregir algo (alguien más quiere entrar, una exclusión…): *Repetir sorteo*,
    ajusta y vuelve a sortear. Mientras no publiques, nadie ha visto nada.
 4. **Publicar resultados**. Es definitivo. Todos reciben una notificación y ven a quién regalan,
-   su lista de deseos y sus gustos. Se abre el chat anónimo.
+   su lista de deseos y sus gustos. Se abre el chat (ver abajo).
+
+## El chat
+
+Con el sorteo publicado, en *Mensajes* cada participante puede escribirle **a cualquier otro
+participante**, con su nombre o **en secreto**. Así se puede despistar: mandar bromas o detallitos a
+otras personas para que nadie adivine quién es su amigo secreto de verdad.
+
+- Quien recibe un chat anónimo ve un alias («Reno misterioso 🦌»). El chat de su amigo secreto real
+  se ve **igual** que los de despiste: nadie sabe cuál es el oficial.
+- Quien regala ve a su destinatario con la marca *Tu amigo secreto 🎁* (solo él la ve).
+- Si alguien recibe mensajes molestos puede **silenciar** el chat. Nadie, tampoco tú, puede saber
+  quién escribe en secreto. En tus estadísticas solo verás totales.
 
 ## Si el sorteo ya se hizo fuera de la app (papelitos)
 
