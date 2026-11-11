@@ -4,11 +4,12 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import TextField from '../../components/ui/TextField';
-import { getErrorMessage } from '../../lib/errors';
+import { getErrorMessage, RateLimitError } from '../../lib/errors';
 import { profileKeys } from '../profile/hooks';
 import { changePassword } from './api';
 import { fieldErrors, newPasswordSchema } from './schemas';
 import { useAuth } from './useAuth';
+import { useCooldown } from './useCooldown';
 
 type Field = 'password' | 'confirm';
 
@@ -21,6 +22,7 @@ export default function ChangePasswordPage() {
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const cooldown = useCooldown();
 
   const forced = profile?.must_change_password ?? false;
 
@@ -40,6 +42,7 @@ export default function ChangePasswordPage() {
       navigate('/', { replace: true });
     } catch (error) {
       setFormError(getErrorMessage(error));
+      if (error instanceof RateLimitError) cooldown.start(error.retryAfterSeconds);
     } finally {
       setSubmitting(false);
     }
@@ -76,9 +79,18 @@ export default function ChangePasswordPage() {
           {formError}
         </p>
       )}
-      <Button type="submit" size="lg" disabled={submitting} className="w-full">
+      <Button
+        type="submit"
+        size="lg"
+        disabled={submitting || cooldown.coolingDown}
+        className="w-full"
+      >
         <KeyRound aria-hidden="true" className="w-4 h-4" />
-        {submitting ? 'Guardando...' : 'Guardar contraseña'}
+        {cooldown.coolingDown
+          ? `Espera ${cooldown.secondsLeft} s`
+          : submitting
+            ? 'Guardando...'
+            : 'Guardar contraseña'}
       </Button>
       <div className="text-center text-sm">
         {forced ? (

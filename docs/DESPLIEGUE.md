@@ -45,8 +45,10 @@ La versión anterior de la app usaba un proyecto de Supabase con la tabla `team_
    - Desactiva **Allow new users to sign up** (nadie se registra solo).
    - Deja **Email** habilitado. Desactiva **Confirm email** (las cuentas las crea el admin).
    - **Password**: longitud mínima **10**, requisito **Letters and digits**.
-5. **Authentication → URL Configuration**: `Site URL` = URL pública de la app.
-6. **Database → Backups**: comprueba que los backups diarios están activos (plan Pro).
+5. **Authentication → Rate Limits**: sube los límites por IP (ver
+   [Muchas personas desde la misma red](#muchas-personas-desde-la-misma-red)).
+6. **Authentication → URL Configuration**: `Site URL` = URL pública de la app.
+7. **Database → Backups**: comprueba que los backups diarios están activos (plan Pro).
 
 ## 2. Primer administrador
 
@@ -93,3 +95,39 @@ El resto de cuentas se crean desde la app (*Usuarios › Agregar usuarios*).
 
 Las migraciones nuevas se prueban primero en local (`npm run db:reset && npm run db:test &&
 npm run test:e2e`), luego en staging y por último en producción con `npx supabase db push`.
+
+Las migraciones se aplican **a mano** con `npx supabase db push`, y Vercel publica el frontend en
+cuanto un cambio llega a `main`. Si un cambio trae migraciones, aplícalas **antes** de fusionar en
+`main`: si no, la web nueva llama a funciones que aún no existen en la base de datos.
+
+## Muchas personas desde la misma red
+
+Supabase Auth limita las peticiones **por dirección IP**. En una oficina todo el mundo sale a
+internet con la misma IP pública, así que para Supabase decenas de compañeros entrando a la vez son
+"una sola IP haciendo muchas peticiones".
+
+- El límite que importa es **Token refresh** (por defecto, 150 cada 5 minutos por IP). Cubre el
+  endpoint `/token`, que usan **tanto los inicios de sesión con email y contraseña como las
+  renovaciones automáticas de sesión** (cada pestaña abierta renueva su sesión cada hora).
+- Al superarlo, Supabase responde `429` (`over_request_rate_limit`): no deja entrar y, a quien ya
+  está dentro, se le caduca la sesión y la app empieza a fallar.
+- La app avisa con "Hay mucha gente entrando a la vez. Espera un minuto…" y bloquea el botón 60 s
+  para que los reintentos no alarguen el bloqueo.
+
+**Cómo confirmarlo**: *Logs → Auth* (o *Logs Explorer*), buscar respuestas `429` /
+`over_request_rate_limit` a la hora del problema.
+
+**Valores recomendados** en *Authentication → Rate Limits* (unas 100 personas detrás de la misma
+IP):
+
+| Límite                      | Por defecto      | Recomendado       |
+| --------------------------- | ---------------- | ----------------- |
+| Token refresh               | 150 / 5 min / IP | **1500** / 5 min  |
+| Sign-ups and sign-ins       | 30 / 5 min / IP  | **300** / 5 min   |
+| Token verifications         | 30 / 5 min / IP  | **300** / 5 min   |
+
+Los mismos valores están en `supabase/config.toml` como referencia. En local no se nota: el
+servidor de Auth local no limita por IP.
+
+Alternativa sin tocar los límites: el día del arranque, repartir las credenciales por grupos (por
+ejemplo, 20 personas cada 5 minutos).

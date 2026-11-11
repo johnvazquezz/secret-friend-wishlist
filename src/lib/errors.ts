@@ -8,6 +8,33 @@ export class AppError extends Error {
   }
 }
 
+export const RATE_LIMIT_MESSAGE =
+  'Hay mucha gente entrando a la vez. Espera un minuto y vuelve a intentarlo.';
+
+/** Supabase rechazó la petición por exceso de solicitudes (HTTP 429). */
+export class RateLimitError extends AppError {
+  constructor(public readonly retryAfterSeconds = 60) {
+    super(RATE_LIMIT_MESSAGE);
+    this.name = 'RateLimitError';
+  }
+}
+
+/**
+ * ¿Es un error de límite de peticiones? Supabase Auth limita por dirección IP, y en una oficina
+ * todo el mundo comparte la misma IP pública: con muchas personas entrando a la vez se alcanza.
+ */
+export function isRateLimitError(error: unknown): boolean {
+  if (error instanceof RateLimitError) return true;
+  const record = asRecord(error);
+  if (!record) return false;
+  return (
+    record.status === 429 ||
+    record.code === 'over_request_rate_limit' ||
+    record.code === '429' ||
+    (typeof record.message === 'string' && /rate limit/i.test(record.message))
+  );
+}
+
 /** Mensajes de las excepciones de negocio lanzadas por las funciones de la base de datos. */
 const DB_ERROR_MESSAGES: Record<string, string> = {
   not_admin: 'Solo un administrador puede hacer esto.',
@@ -52,6 +79,7 @@ function asRecord(error: unknown): Record<string, unknown> | null {
 /** Convierte cualquier error (Supabase, red, código) en un mensaje legible en español. */
 export function getErrorMessage(error: unknown): string {
   if (error instanceof AppError) return error.message;
+  if (isRateLimitError(error)) return RATE_LIMIT_MESSAGE;
   if (error instanceof TypeError && /fetch/i.test(error.message)) {
     return 'No se pudo conectar con el servidor. Revisa tu conexión.';
   }

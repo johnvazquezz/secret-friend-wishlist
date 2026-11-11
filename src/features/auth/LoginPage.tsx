@@ -3,10 +3,11 @@ import { useState, type FormEvent } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import TextField from '../../components/ui/TextField';
-import { getErrorMessage } from '../../lib/errors';
+import { getErrorMessage, RateLimitError } from '../../lib/errors';
 import { signIn } from './api';
 import { fieldErrors, loginSchema } from './schemas';
 import { useAuth } from './useAuth';
+import { useCooldown } from './useCooldown';
 
 type Field = 'email' | 'password';
 
@@ -18,6 +19,7 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const cooldown = useCooldown();
 
   const from = (location.state as { from?: string } | null)?.from ?? '/';
   if (session) return <Navigate to={from} replace />;
@@ -37,6 +39,7 @@ export default function LoginPage() {
       // La redirección ocurre al cambiar la sesión (ver `if (session)` arriba).
     } catch (error) {
       setFormError(getErrorMessage(error));
+      if (error instanceof RateLimitError) cooldown.start(error.retryAfterSeconds);
     } finally {
       setSubmitting(false);
     }
@@ -66,9 +69,18 @@ export default function LoginPage() {
           {formError}
         </p>
       )}
-      <Button type="submit" size="lg" disabled={submitting} className="w-full">
+      <Button
+        type="submit"
+        size="lg"
+        disabled={submitting || cooldown.coolingDown}
+        className="w-full"
+      >
         <LogIn aria-hidden="true" className="w-4 h-4" />
-        {submitting ? 'Entrando...' : 'Entrar'}
+        {cooldown.coolingDown
+          ? `Espera ${cooldown.secondsLeft} s`
+          : submitting
+            ? 'Entrando...'
+            : 'Entrar'}
       </Button>
       <p className="text-sm text-stone-500 text-center pt-1">
         ¿No tienes cuenta o olvidaste tu contraseña? Pídesela al organizador del Amigo Secreto.
