@@ -19,6 +19,7 @@ import { isChatAvailable, useChatRealtime, useMyConversations } from '../feature
 import { useActiveEvent, useMyParticipation } from '../features/event/hooks';
 import NotificationBell from '../features/notifications/NotificationBell';
 import { useAvatarUrls } from '../features/profile/hooks';
+import { usePushSync, useServiceWorkerNavigation } from '../features/push/hooks';
 
 /** Enlace de la navegación principal: barra inferior en móvil, pastilla en escritorio. */
 function MainLink({
@@ -81,6 +82,8 @@ export default function AppLayout() {
   const showChat =
     isChatAvailable(event?.status) && (participation === 'confirmed' || conversations.length > 0);
   useChatRealtime(showChat ? event?.id : undefined, profile?.id);
+  usePushSync(profile?.id);
+  useServiceWorkerNavigation();
   const unread = conversations.reduce((sum, c) => sum + c.unread, 0);
 
   return (

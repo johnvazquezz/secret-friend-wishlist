@@ -35,7 +35,8 @@ La versión anterior de la app usaba un proyecto de Supabase con la tabla `team_
    Esto crea tablas, RLS, funciones, el bucket `avatars`, Realtime y la tarea diaria de
    recordatorios (pg_cron).
 
-3. Despliega la Edge Function de gestión de usuarios:
+3. Despliega la Edge Function de gestión de usuarios (la de push se configura en el
+   [paso 5](#5-notificaciones-push)):
 
    ```bash
    npx supabase functions deploy admin-users
@@ -84,6 +85,125 @@ El resto de cuentas se crean desde la app (*Usuarios › Agregar usuarios*).
       `giver_id`.
 - [ ] Finalizar y **eliminar** los datos de prueba antes de crear el evento real
       (un evento en borrador se puede borrar; uno finalizado queda archivado).
+- [ ] Notificaciones push: ver las pruebas del [paso 5](#pruebas-de-push).
+
+## 5. Notificaciones push
+
+Opcional pero recomendado. Sin esta configuración la app funciona igual; simplemente no aparece
+la opción de activar notificaciones.
+
+### Claves y secrets (una sola vez)
+
+1. Genera el par de claves VAPID (guárdalas en el gestor de contraseñas de la empresa: si cambian,
+   todas las suscripciones se renuevan solas, pero los dispositivos que no abran la app dejarán de
+   recibir avisos):
+
+   ```bash
+   npx web-push generate-vapid-keys
+   ```
+
+2. Genera un secreto aleatorio para que solo la base de datos pueda llamar a la función:
+
+   ```bash
+   openssl rand -hex 32
+   ```
+
+3. Guarda los secrets de la Edge Function y despliégala:
+
+   ```bash
+   npx supabase secrets set \
+     VAPID_PUBLIC_KEY=<clave pública> \
+     VAPID_PRIVATE_KEY=<clave privada> \
+     VAPID_SUBJECT=mailto:<email de contacto del organizador> \
+     PUSH_WEBHOOK_SECRET=<secreto del paso 2>
+   npx supabase functions deploy send-push
+   ```
+
+   `send-push` se despliega con `verify_jwt = false` (está en `supabase/config.toml`): no la llaman
+   usuarios sino la base de datos, y se protege con `PUSH_WEBHOOK_SECRET`.
+
+4. En *SQL Editor*, guarda en **Vault** la URL de la función y el mismo secreto. Es lo que usan
+   los triggers de `messages` y `notifications` (equivale a un *Database Webhook*, pero versionado
+   en la migración `20261122100000_web_push.sql`):
+
+   ```sql
+   select vault.create_secret('https://<ref>.supabase.co/functions/v1/send-push', 'push_function_url');
+   select vault.create_secret('<secreto del paso 2>', 'push_webhook_secret');
+   ```
+
+   Para cambiarlos más adelante: `select vault.update_secret(id, '<nuevo valor>') from
+   vault.secrets where name = 'push_webhook_secret';` (y lo mismo en `supabase secrets set`).
+
+5. En Vercel (Production y Preview), añade `VITE_VAPID_PUBLIC_KEY` = la clave **pública** y
+   vuelve a desplegar. **Nunca** pongas la clave privada ni la `service_role` en Vercel.
+
+### Cómo funciona
+
+```
+INSERT en messages / notifications
+  → trigger (calcula destinatario y título: nombre o alias)
+  → pg_net → Edge Function send-push (web-push + VAPID)
+  → servicio push del navegador (FCM, Apple, Mozilla, Windows)
+  → service worker public/sw.js → notificación
+```
+
+- No se envía nada a quien escribe, ni a quien silenció el chat, ni a cuentas desactivadas.
+- Si el chat ya está abierto y visible, el service worker no muestra la notificación.
+- Suscripciones caducadas (el servicio responde 404/410) se borran solas.
+
+### Pruebas de push
+
+- [ ] **Suscripción**: en *Mi perfil → Activar notificaciones* aparece el permiso; tras aceptar,
+      *Table Editor → push_subscriptions* tiene una fila nueva.
+- [ ] **Android con la app cerrada**: cierra Chrome por completo, escribe desde otra cuenta → llega
+      la notificación; al tocarla se abre la conversación.
+- [ ] **iPhone**: en Safari, *Mi perfil* muestra los pasos. Tras *Añadir a pantalla de inicio*,
+      abre la app desde el icono, activa las notificaciones y repite la prueba anterior.
+- [ ] **Anonimato**: un mensaje en secreto llega con el alias (🦌…), nunca con el nombre.
+- [ ] **Remitente**: quien escribe no recibe su propio push.
+- [ ] **Chat abierto**: con la conversación abierta y en primer plano no llega push; con otra
+      abierta, sí.
+- [ ] **Avisos**: *Evento › Enviar un aviso* llega como push a quien tiene la app cerrada.
+- [ ] **Caducada**: desinstala la PWA o revoca el permiso; tras el siguiente envío, la fila
+      desaparece de `push_subscriptions` (el log dice `caducadas=1`).
+- [ ] **Cerrar sesión**: la fila de ese dispositivo desaparece.
+
+### Depuración
+
+- Navegador: *DevTools → Application → Service Workers* (estado de `sw.js`; el botón **Push**
+  simula un envío, p. ej. `{"kind":"chat","title":"Prueba","body":"Hola","url":"/mensajes"}`) y
+  *Application → Manifest* (iconos e instalabilidad).
+- Edge Function: *Dashboard → Edge Functions → send-push → Logs* (una línea por envío con
+  `ok`, `caducadas` y `fallos`; nunca el contenido).
+- Llamadas de la base de datos a la función:
+
+  ```sql
+  select created, status_code, content from net._http_response order by created desc limit 20;
+  ```
+
+  `401` = el secreto de Vault no coincide con `PUSH_WEBHOOK_SECRET`. Sin filas = falta la
+  configuración de Vault.
+- Android: comprueba que Chrome tenga permitidas las notificaciones en los ajustes del sistema y
+  que el ahorro de batería no lo restrinja.
+
+### En local
+
+```bash
+npm run db:start
+# supabase/functions/.env.local (ignorado por git) con VAPID_*, VAPID_SUBJECT y PUSH_WEBHOOK_SECRET
+npx supabase functions serve --env-file supabase/functions/.env.local
+```
+
+En *SQL* local, apunta Vault a la función a través de la red de Docker:
+
+```sql
+select vault.create_secret('http://supabase_kong_secret-friend-wishlist:8000/functions/v1/send-push', 'push_function_url');
+select vault.create_secret('<PUSH_WEBHOOK_SECRET de .env.local>', 'push_webhook_secret');
+```
+
+Y en `.env.local` del front, `VITE_VAPID_PUBLIC_KEY`. `localhost` cuenta como contexto seguro, así
+que no hace falta HTTPS (para probar en un celular real sí: usa un despliegue de *Preview*).
+`npm run db:reset` borra Vault: hay que volver a crear los dos secretos.
 
 ## Entornos
 

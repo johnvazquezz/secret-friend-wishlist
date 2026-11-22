@@ -9,6 +9,7 @@ import Spinner from '../../components/ui/Spinner';
 import { useAuth } from '../auth/useAuth';
 import { useActiveEvent, useMyParticipation } from '../event/hooks';
 import { useAvatarUrls } from '../profile/hooks';
+import PushPromptBanner from '../push/PushPromptBanner';
 import { partnerLabel, type Conversation as ConversationData } from './api';
 import Conversation from './Conversation';
 import { isChatAvailable, useMyConversations } from './hooks';
@@ -115,6 +116,8 @@ export default function ChatPage() {
           )
         }
       />
+
+      {profile && <PushPromptBanner userId={profile.id} />}
 
       {conversations.length === 0 ? (
         <EmptyState

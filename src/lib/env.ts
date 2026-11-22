@@ -3,6 +3,14 @@ import { z } from 'zod';
 const envSchema = z.object({
   VITE_SUPABASE_URL: z.string().url('VITE_SUPABASE_URL debe ser una URL válida'),
   VITE_SUPABASE_ANON_KEY: z.string().min(1, 'VITE_SUPABASE_ANON_KEY es obligatoria'),
+  // Opcional: sin ella, la opción de notificaciones push no aparece.
+  VITE_VAPID_PUBLIC_KEY: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{80,100}$/, 'VITE_VAPID_PUBLIC_KEY no parece una clave pública VAPID')
+      .optional(),
+  ),
 });
 
 export type Env = z.infer<typeof envSchema>;

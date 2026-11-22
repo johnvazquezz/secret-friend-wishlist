@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Card, { CardHeader } from '../../components/ui/Card';
 import PageHeader from '../../components/ui/PageHeader';
 import { useAuth } from '../auth/useAuth';
+import PushSettingsCard from '../push/PushSettingsCard';
 import AvatarUploader from './AvatarUploader';
 import ProfileForm from './ProfileForm';
 
@@ -24,6 +25,8 @@ export default function ProfilePage() {
           <CardHeader icon={<UserRound />} title="Datos personales" description={profile.email} />
           <ProfileForm profile={profile} />
         </Card>
+
+        <PushSettingsCard userId={profile.id} />
 
         <Card padded={false}>
           <h2 className="sr-only">Seguridad</h2>
