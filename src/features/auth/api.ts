@@ -1,4 +1,4 @@
-import { AppError } from '../../lib/errors';
+import { AppError, isRateLimitError, RateLimitError } from '../../lib/errors';
 import { supabase } from '../../lib/supabase';
 
 export async function signIn(email: string, password: string): Promise<void> {
@@ -7,6 +7,7 @@ export async function signIn(email: string, password: string): Promise<void> {
     password,
   });
   if (!error) return;
+  if (isRateLimitError(error)) throw new RateLimitError();
   if (error.code === 'invalid_credentials') {
     throw new AppError('Email o contraseña incorrectos.');
   }
@@ -23,6 +24,7 @@ export async function signOut(): Promise<void> {
 export async function changePassword(newPassword: string): Promise<void> {
   const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) {
+    if (isRateLimitError(error)) throw new RateLimitError();
     if (error.code === 'same_password') {
       throw new AppError('La nueva contraseña debe ser distinta de la actual.');
     }

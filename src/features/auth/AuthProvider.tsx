@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../profile/hooks';
+import { disablePushOnSignOut } from '../push/browser';
 import { signOut as apiSignOut } from './api';
 import { AuthContext, type AuthState } from './AuthContext';
 
@@ -35,6 +36,9 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   const profileQuery = useProfile(userId);
 
   const signOut = useCallback(async () => {
+    // Antes de cerrar sesión (después ya no hay permiso para borrar la fila): este dispositivo
+    // deja de recibir avisos de la cuenta, importante en equipos compartidos.
+    await disablePushOnSignOut();
     await apiSignOut();
     queryClient.clear();
   }, [queryClient]);

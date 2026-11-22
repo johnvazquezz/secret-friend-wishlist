@@ -128,7 +128,23 @@ Campana en la cabecera, actualizada en tiempo real. Las genera la base de datos:
   deseos vacía y cuenta atrás de los 3 últimos días antes del intercambio. Nunca se duplican.
 - **Avisos del organizador** desde *Evento › Enviar un aviso* (a todos los usuarios activos).
 
-Los mensajes del chat no generan notificaciones: tienen su propio contador en *Mensajes*.
+Los mensajes del chat no aparecen en la campana: tienen su propio contador en *Mensajes*.
+
+### 📱 Notificaciones push
+
+Cada persona puede activarlas en *Mi perfil* (o desde el aviso de *Mensajes*). Llegan al celular
+aunque la app esté cerrada, para **mensajes nuevos** (título: el nombre de quien escribe o su
+alias si escribe en secreto) y para **todos los avisos de la campana**.
+
+- Web Push estándar (VAPID): service worker `public/sw.js`, Edge Function `send-push` y triggers
+  en `messages` y `notifications` (`pg_net`). Sin Firebase ni servicios de terceros.
+- **Android** (Chrome): funciona directamente, también con la pestaña cerrada.
+- **iPhone** (iOS 16.4+): solo con la web instalada en la pantalla de inicio; la app muestra los
+  pasos.
+- No se notifica un chat que ya tienes abierto y visible. Al cerrar sesión, el dispositivo deja de
+  recibir avisos de esa cuenta.
+
+Configuración en [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md#5-notificaciones-push).
 
 ## ☁️ Puesta en producción
 

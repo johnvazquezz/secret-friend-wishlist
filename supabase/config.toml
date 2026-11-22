@@ -203,11 +203,16 @@ sms_sent = 30
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
 anonymous_users = 30
 # Number of sessions that can be refreshed in a 5 minute interval per IP address.
-token_refresh = 150
+# OJO: en Supabase Auth este límite cubre el endpoint /token, que usan TANTO las renovaciones de
+# sesión COMO los inicios de sesión con email y contraseña. En una oficina todos comparten la misma
+# IP pública, así que con el valor por defecto (150) unas pocas decenas de personas lo agotan.
+# Este archivo solo afecta al entorno local (que no limita por IP); en producción se cambia en el
+# panel: Authentication → Rate Limits. Ver docs/DESPLIEGUE.md.
+token_refresh = 1500
 # Number of sign up and sign-in requests that can be made in a 5 minute interval per IP address (excludes anonymous users).
-sign_in_sign_ups = 30
+sign_in_sign_ups = 300
 # Number of OTP / Magic link verifications that can be made in a 5 minute interval per IP address.
-token_verifications = 30
+token_verifications = 300
 # Number of Web3 logins that can be made in a 5 minute interval per IP address.
 web3 = 30
 
@@ -415,3 +420,7 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+# La llama solo la base de datos (pg_net) con el secreto compartido x-push-secret, sin JWT.
+[functions.send-push]
+verify_jwt = false

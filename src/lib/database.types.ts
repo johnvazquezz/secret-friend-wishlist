@@ -419,6 +419,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      push_subscriptions: {
+        Row: {
+          created_at: string;
+          endpoint: string | null;
+          id: string;
+          subscription: NonNullable<Json>;
+          user_agent: string | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          endpoint?: never;
+          id?: string;
+          subscription: NonNullable<Json>;
+          user_agent?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          endpoint?: never;
+          id?: string;
+          subscription?: NonNullable<Json>;
+          user_agent?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'push_subscriptions_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       team_members: {
         Row: {
           access_code: string;
@@ -598,6 +634,7 @@ export type Database = {
           is_valid: boolean;
         }[];
       };
+      enqueue_push: { Args: { p_jobs: Json }; Returns: undefined };
       event_is_editable: { Args: { p_event_id: string }; Returns: boolean };
       finish_event: { Args: { p_event_id: string }; Returns: undefined };
       get_my_assignment: {
@@ -638,12 +675,24 @@ export type Database = {
       insert_thread_message: { Args: { p_body: string; p_thread_id: string }; Returns: string };
       is_active_participant: { Args: { p_event_id: string; p_user_id: string }; Returns: boolean };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      is_valid_push_subscription: { Args: { p_subscription: Json }; Returns: boolean };
       lock_event: {
         Args: { p_event_id: string; p_expected: Database['public']['Enums']['event_status'][] };
         Returns: Database['public']['Enums']['event_status'];
       };
       mark_notifications_read: { Args: { p_ids?: string[] }; Returns: undefined };
       mark_thread_read: { Args: { p_thread_id: string }; Returns: undefined };
+      message_push_jobs: {
+        Args: { p_message_ids: string[] };
+        Returns: {
+          body: string;
+          tag: string;
+          thread_id: string;
+          title: string;
+          url: string;
+          user_id: string;
+        }[];
+      };
       my_claim_is_locked: { Args: { p_event_id: string; p_giver: string }; Returns: boolean };
       my_thread_role: {
         Args: { p_thread_id: string };
@@ -662,6 +711,10 @@ export type Database = {
       };
       open_event: { Args: { p_event_id: string }; Returns: undefined };
       publish_draw: { Args: { p_event_id: string }; Returns: undefined };
+      register_push_subscription: {
+        Args: { p_subscription: Json; p_user_agent?: string };
+        Returns: undefined;
+      };
       release_my_claim: { Args: { p_event_id: string }; Returns: undefined };
       require_admin: { Args: Record<PropertyKey, never>; Returns: undefined };
       require_manual_participant: {

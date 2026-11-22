@@ -1,8 +1,8 @@
 # Modelo de seguridad y privacidad
 
 Principio: **el frontend no protege nada**. Toda regla vive en PostgreSQL (RLS, privilegios por
-columna y funciones `SECURITY DEFINER` acotadas) o en la Edge Function `admin-users`. La app solo
-usa la clave pública (anon); la `service_role` solo existe en la Edge Function.
+columna y funciones `SECURITY DEFINER` acotadas) o en las Edge Functions `admin-users` y `send-push`. La app solo
+usa la clave pública (anon); la `service_role` solo existe en las Edge Functions.
 
 ## Qué ve cada quién
 
@@ -59,10 +59,25 @@ usa la clave pública (anon); la `service_role` solo existe en la Edge Function.
   persona al día. Quien recibe puede **silenciar** un chat: nadie puede volver a escribir en él y no
   se revela ninguna identidad.
 - Cabeceras: CSP estricta, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`.
+- **Notificaciones push**:
+  - Quién recibe cada push y con qué título lo decide la base de datos (`message_push_jobs`),
+    con la misma regla que el chat: quien escribe en secreto aparece con su **alias**, nunca con
+    su nombre. La petición que sale hacia la Edge Function `send-push` no contiene el id ni el
+    nombre de quien escribe en secreto (lo comprueba pgTAP).
+  - `push_subscriptions`: cada persona solo ve y borra las suyas; solo se guardan endpoints de
+    servicios push conocidos (FCM, Mozilla, Apple, Windows), así la función nunca llama a otras
+    URLs.
+  - `send-push` no acepta JWT de usuarios: solo la base de datos la llama, con un secreto
+    compartido guardado en Vault y en los secrets de la función (comparación en tiempo
+    constante). La clave privada VAPID solo existe en esos secrets.
+  - El contenido viaja cifrado de extremo a extremo hasta el dispositivo (RFC 8291): el servicio
+    push (Google, Apple…) no puede leerlo. Los logs de la función solo registran conteos.
+  - Al cerrar sesión se anula la suscripción del dispositivo, y si otra persona entra en el mismo
+    navegador, la suscripción anterior se anula sola.
 
 ## Pruebas
 
-- `supabase/tests/database/*.test.sql` (pgTAP, 169 pruebas): cada regla anterior tiene pruebas
+- `supabase/tests/database/*.test.sql` (pgTAP, 200 pruebas): cada regla anterior tiene pruebas
   que intentan saltársela (anónimo, otro participante, admin) y esperan el fallo, más 300 sorteos
   aleatorios verificados.
 - `e2e/`: flujos completos contra Supabase real, incluido Realtime.
@@ -73,6 +88,9 @@ usa la clave pública (anon); la `service_role` solo existe en la Edge Function.
   la base de datos directamente. Limita ese acceso a una persona técnica que, idealmente, no
   participe.
 - Si alguien escribe su nombre en el chat, se revela. La app avisa, pero no lee los mensajes.
+- Las notificaciones push muestran el inicio del mensaje en la pantalla bloqueada del celular;
+  quien quiera más discreción puede desactivarlas o ajustar la privacidad de notificaciones de
+  su teléfono.
 - Mensajes anónimos ofensivos: como nadie (tampoco el admin) puede saber quién escribe, la única
   medida es **silenciar** el chat. Es una decisión consciente para mantener el anonimato.
 - Sorteo con papelitos: si el admin libera a un destinatario que ya tenía mensajes, esa

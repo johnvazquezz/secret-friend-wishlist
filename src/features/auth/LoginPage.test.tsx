@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { routes } from '../../app/routes';
-import { AppError } from '../../lib/errors';
+import { AppError, RateLimitError } from '../../lib/errors';
 import { makeAuth, renderRoutes } from '../../test/utils';
 import { signIn } from './api';
 
@@ -42,5 +42,19 @@ describe('LoginPage', () => {
     await userEvent.type(screen.getByLabelText('Contraseña'), 'mal');
     await userEvent.click(screen.getByRole('button', { name: 'Entrar' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Email o contraseña incorrectos.');
+  });
+
+  it('si Supabase limita las entradas, lo explica y bloquea el botón con una cuenta atrás', async () => {
+    signInMock.mockImplementation(async () => {
+      throw new RateLimitError(60);
+    });
+    renderRoutes(routes, '/login', loggedOut());
+    await userEvent.type(await screen.findByLabelText('Email'), 'ana@empresa.com');
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'secreta123');
+    await userEvent.click(screen.getByRole('button', { name: 'Entrar' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/mucha gente entrando a la vez/);
+    const button = screen.getByRole('button', { name: /Espera \d+ s/ });
+    expect(button).toBeDisabled();
+    expect(signInMock).toHaveBeenCalledTimes(1);
   });
 });
