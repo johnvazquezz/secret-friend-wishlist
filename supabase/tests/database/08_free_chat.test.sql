@@ -118,7 +118,8 @@ select ok(
 );
 select is(
   (select count(*) from public.get_my_conversations('50000000-0000-4000-8000-000000000001') c
-   where c::text ilike '%Ana%' or c::text like '%00000000-0000-4000-8000-000000000002%')::int,
+   -- Nombre completo, no '%Ana%': el alias aleatorio "Gorro de lana" también lo contiene.
+   where c::text like '%Ana Pérez%' or c::text like '%00000000-0000-4000-8000-000000000002%')::int,
   0, 'nada en la respuesta de Pedro menciona a Ana'
 );
 select throws_ok($$ select * from public.free_threads $$, '42501', null, 'Pedro no lee free_threads');

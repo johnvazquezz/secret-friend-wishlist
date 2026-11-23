@@ -249,5 +249,10 @@ IP):
 Los mismos valores están en `supabase/config.toml` como referencia. En local no se nota: el
 servidor de Auth local no limita por IP.
 
+> **Nunca ejecutes `npx supabase config push` contra producción.** `config.toml` está pensado
+> para el entorno local: subirlo cambiaría la *Site URL* a `http://127.0.0.1:5173`, desactivaría
+> MFA y modificaría otros ajustes del proyecto. Los cambios de Auth en producción se hacen en el
+> panel. Para comparar sin tocar nada: `npx supabase config diff --project-ref <ref>`.
+
 Alternativa sin tocar los límites: el día del arranque, repartir las credenciales por grupos (por
 ejemplo, 20 personas cada 5 minutos).
