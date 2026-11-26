@@ -34,7 +34,7 @@ docs/             Despliegue, guía del organizador y seguridad
 ## 💻 Requisitos
 
 - Node.js 20 o superior
-- Docker Desktop (solo para levantar Supabase en local)
+- Docker Desktop (para Supabase local y el entorno de pruebas)
 
 ## 🚀 Cómo empezar
 
@@ -65,6 +65,48 @@ Usuarios de prueba del seed (contraseña `Amigo2026local`):
 | `admin@local.test` | admin        |                                         |
 | `ana@local.test`   | participante |                                         |
 | `luis@local.test`  | participante | tiene contraseña temporal (debe cambiarla) |
+
+También existen `maria`, `pedro`, `sofia` y `jorge` (`@local.test`, misma contraseña).
+
+### 🐳 Entorno de pruebas local (copia de producción)
+
+Para probar un cambio en tu PC **antes de desplegarlo**, con la app compilada igual que en
+producción (nginx, mismas cabeceras y CSP que Vercel), Supabase local, Edge Functions y
+notificaciones push funcionando:
+
+```bash
+npm run local:up:demo   # primera vez: también carga un evento de demo ya publicado
+npm run local:up        # siguientes veces (los datos se conservan)
+```
+
+| Qué            | Dónde                                        |
+| -------------- | -------------------------------------------- |
+| App            | http://localhost:8080                        |
+| Base de datos  | http://localhost:54323 (Supabase Studio)     |
+| API Supabase   | http://127.0.0.1:54321                       |
+
+Otros comandos:
+
+```bash
+npm run local:status       # qué está corriendo
+npm run local:reset        # base de datos limpia (migraciones + seed)
+npm run local:reset:demo   # base limpia + datos de demo
+npm run local:down         # para todo (los datos se conservan)
+```
+
+- La primera vez crea claves VAPID **de desarrollo** en `supabase/functions/.env.local` (ignorado
+  por git) y configura Vault para que el push funcione en local. Nunca usa las de producción.
+- Los datos de demo (`supabase/demo.sql`) dejan un evento publicado con Ana, Luis, María, Pedro
+  y Sofía, deseos, conversaciones y un aviso del organizador.
+- Push: actívalo en *Mi perfil* desde Edge o Chrome normal (en ventana privada no funciona). Para
+  probar con dos personas usa otro navegador o un perfil distinto.
+- Después de cambiar código, vuelve a ejecutar `npm run local:up`: recompila la imagen de la app.
+- Puerto ocupado: `LOCAL_WEB_PORT=8090 npm run local:up`.
+- Nada de esto toca producción: el script nunca usa el proyecto enlazado.
+- `npm run db:test` y `npm run test:e2e` necesitan la base **limpia**: con los datos de demo
+  cargados fallan. Ejecuta antes `npm run local:reset` (borra la demo).
+
+Flujo recomendado: **cambio → `npm run check` → probar en `local:up` → PR → desplegar**.
 
 ## 🔐 Cuentas y acceso
 

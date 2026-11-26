@@ -23,6 +23,12 @@
     "db:types": "supabase gen types typescript --local > src/lib/database.types.ts && prettier --write src/lib/database.types.ts",
     "db:test": "supabase test db",
     "functions:serve": "supabase functions serve",
+    "local:up": "node scripts/local-env.mjs up",
+    "local:up:demo": "node scripts/local-env.mjs up --demo",
+    "local:reset": "node scripts/local-env.mjs reset",
+    "local:reset:demo": "node scripts/local-env.mjs reset --demo",
+    "local:status": "node scripts/local-env.mjs status",
+    "local:down": "node scripts/local-env.mjs down",
     "test:e2e": "node e2e/run.mjs",
     "test:e2e:ui": "node e2e/run.mjs --ui",
     "photos:teams": "node scripts/import-teams-photos.mjs"
