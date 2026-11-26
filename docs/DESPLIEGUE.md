@@ -209,12 +209,18 @@ que no hace falta HTTPS (para probar en un celular real sí: usa un despliegue d
 
 | Entorno    | Supabase                    | Frontend               |
 | ---------- | --------------------------- | ---------------------- |
-| Local      | `npm run db:start` (Docker) | `npm run dev`          |
-| Staging    | proyecto Supabase aparte    | Vercel *Preview*       |
-| Producción | proyecto Supabase principal | Vercel *Production*    |
+| Entorno                  | Supabase                    | Frontend                              |
+| ------------------------ | --------------------------- | ------------------------------------- |
+| Desarrollo               | `npm run db:start` (Docker) | `npm run dev` (recarga en caliente)   |
+| **Pruebas local**        | `npm run local:up` (Docker) | build de producción en nginx, `:8080` |
+| Staging (opcional)       | proyecto Supabase aparte    | Vercel *Preview*                      |
+| Producción               | proyecto Supabase principal | Vercel *Production*                   |
 
-Las migraciones nuevas se prueban primero en local (`npm run db:reset && npm run db:test &&
-npm run test:e2e`), luego en staging y por último en producción con `npx supabase db push`.
+Antes de cada despliegue real, prueba el cambio en el **entorno de pruebas local**
+(`npm run local:up` o `local:reset:demo`; ver el README). Ahí corren las migraciones nuevas, las
+Edge Functions con secretos de desarrollo y el push, sobre la app compilada con las mismas
+cabeceras que Vercel. Comprobaciones mínimas: `npm run check`, `npm run db:test` y, si toca el
+chat o Realtime, `npm run test:e2e`. Después: PR y producción con `npx supabase db push`.
 
 Las migraciones se aplican **a mano** con `npx supabase db push`, y Vercel publica el frontend en
 cuanto un cambio llega a `main`. Si un cambio trae migraciones, aplícalas **antes** de fusionar en

@@ -390,8 +390,14 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
-# [edge_runtime.secrets]
-# secret_key = "env(SECRET_VALUE)"
+# Solo entorno LOCAL. `npm run local:up` las pasa desde supabase/functions/.env.local (claves de
+# desarrollo). Sin esas variables (CI, `npm run db:start`) quedan vacías y send-push responde
+# "Push no configurado". En producción los secrets se cargan con `supabase secrets set`.
+[edge_runtime.secrets]
+VAPID_PUBLIC_KEY = "env(VAPID_PUBLIC_KEY)"
+VAPID_PRIVATE_KEY = "env(VAPID_PRIVATE_KEY)"
+VAPID_SUBJECT = "env(VAPID_SUBJECT)"
+PUSH_WEBHOOK_SECRET = "env(PUSH_WEBHOOK_SECRET)"
 
 [analytics]
 enabled = true

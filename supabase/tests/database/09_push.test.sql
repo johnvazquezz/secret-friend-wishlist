@@ -28,6 +28,11 @@ $$;
 create temp table t_ids (name text primary key, id uuid) on commit drop;
 grant all on t_ids to authenticated;
 
+-- Partimos de "push sin configurar" aunque el entorno local (npm run local:up) haya configurado
+-- Vault, y sin peticiones pendientes de pg_net. Todo se deshace con el rollback final.
+delete from vault.secrets where name in ('push_function_url', 'push_webhook_secret');
+delete from net.http_request_queue;
+
 -- Usuarios del seed: admin 001, ana 002, luis 003, maria 004, pedro 005, sofia 006, jorge 007
 -- Sorteo: luis → ana → maria → pedro → luis
 insert into public.events (id, name, status, created_by) values

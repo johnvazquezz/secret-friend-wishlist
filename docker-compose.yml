@@ -1,0 +1,17 @@
+# Entorno de pruebas local (copia de producción). Úsalo con `npm run local:up`, que primero
+# arranca Supabase local (su CLI ya corre en Docker) y le pasa aquí la URL y la clave anon.
+name: secret-friend-wishlist-local
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-http://127.0.0.1:54321}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:?Falta VITE_SUPABASE_ANON_KEY (usa npm run local:up)}
+        VITE_VAPID_PUBLIC_KEY: ${VITE_VAPID_PUBLIC_KEY:-}
+    image: secret-friend-wishlist-local-web
+    container_name: secret-friend-wishlist-web
+    ports:
+      - '${LOCAL_WEB_PORT:-8080}:80'
+    restart: unless-stopped
